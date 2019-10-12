@@ -52,3 +52,18 @@ Altre annotazioni:
 
     -   scelta di quali richieste hanno la priorità: FIFO oppure qualche altro
     algoritmo (tipo dare priorità alle richieste "più veloci")
+
+
+
+INDICAZIONI GIT:
+
+
+1) Aggiungere le modifiche apportate: git add -A (tutte le modifiche, altrimenti farlo file per file che si vuole aggiungere specificando il nome)
+
+2) Commit: git commit -m "Messaggio per capire cosa hai aggiunto" N.B. E' obbligatorio, altrimenti non ti fa fare la commit 
+
+3) Push sulla repo online: git push origin master (ossia dalla cartella che si è messa come origin, nel nostro caso da code, al branch master, a meno che non faremo branch secondari
+
+
+Per verificare che sia tutto Up-To-Date: git status
+
