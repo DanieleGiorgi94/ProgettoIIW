@@ -6,4 +6,5 @@
 
 void send_pkt(void);
 char *list_dir(char *PATH);
+int check_file(char *file, char *list);
 

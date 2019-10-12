@@ -26,3 +26,11 @@ char *list_dir(char *PATH)
 
     return buff;
 }
+
+int check_file(char *file, char *list)
+{
+	if (strstr(list, file) == NULL)
+		return 0;
+	else 
+		return 1;
+}

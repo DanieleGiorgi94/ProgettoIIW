@@ -13,7 +13,12 @@ int main(void)
 
     char *list = list_dir(PATH);
 
-    printf("\nLista dei file presenti: \n%s", list);
+    printf("\nList of files:\n%s", list);
+
+    if (check_file("bibbia.txt",list))
+        printf("This file is present on the server\n");
+    else printf("This file is NOT present on the server\n");
+
     free(list);
 
     return EXIT_SUCCESS;
