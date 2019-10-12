@@ -1,0 +1,54 @@
+client/server:
+    -   client.c/server.c   --->    file .c contenente il main del client/server
+
+    -   in ciascuna delle cartelle connection, put_command, get_command e
+    list_command ci sono:
+        -   un file .c in cui implementare le funzioni relative alla
+        connessione, alla put, ecc. del client
+        -   un file .h in cui mettere solo i prototipi delle funzioni
+        presenti nel file .c che possono essere chiamati da altri file .c
+
+common:
+    -   comm.h  --->    prototipo di qualsiasi funzione implementata nella
+                        cartella
+
+    -   reliable_udp.h  --->    definizioni utili sia per client, sia per server
+                                ed include per ogni file .h nella cartella
+
+    -   selective_repeat.c  --->    implementare qui il selective repeat,
+                                    facendo in modo che la funzione send_pkt()
+                                    sia la funzione da chiamare dall'esterno
+
+    -   udp.h   --->    tutte le definizioni utili per i pacchetti UDP
+
+    -   la cartella posix_library contiene un po' di funzioni che fanno chiamate
+    di sistema, gestiscono gli eventuali errori, ecc. .
+    Nel file posix_comm.h c'è una descrizione delle funzioni.
+
+struttura_codice.png è più o meno la "catena" di inclusioni dei file.
+
+Funzioni utili:
+    -   lettura dei file in una directory e creazione di una stringa contenente
+    tali file
+
+    -   verifica dell'esistenza di un file in una directory (utile per le
+    richieste get)
+
+    -   scrittura di byte su file (necessario sia per la get, sia per la put)
+        --->    se volete, dovrebbe essere facile implementarla usando le
+        funzioni 'write_block()' e 'move_offset()' che ci sono nella cartella
+        posix_library
+
+    -   gestione dei file duplicati, ossia se il client carica sul server un
+    file con un nome già presente nella directory. Chi lo implementa è libero di
+    scegliere se sovrascrivere il file o modificare il nome del nuovo file.
+
+Altre annotazioni:
+    -   il server deve tenere conto del numero di richieste ed avere un limite
+    massimo (evita sovraccarico/attacchi)
+
+    -   il server deve avere un limite di connessioni contemporanee; da
+    scegliere se queste devono essere persistenti o meno
+
+    -   scelta di quali richieste hanno la priorità: FIFO oppure qualche altro
+    algoritmo (tipo dare priorità alle richieste "più veloci")
