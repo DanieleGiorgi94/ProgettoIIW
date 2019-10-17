@@ -5,7 +5,7 @@ char *list_dir(char *PATH)
 	
 	DIR *d;
   	struct dirent *dir;
-  	char *buff = dynamic_allocation(sizeof(char)*100); //TODO: rendere il buffer allocato dinamicamente (realloc ?) 
+  	char *buff = dynamic_allocation(sizeof(char)*100); //TODO: rendere il buffer riallocato dinamicamente (realloc ?) 
   	int v = 0;
 
   	d = opendir(PATH);
