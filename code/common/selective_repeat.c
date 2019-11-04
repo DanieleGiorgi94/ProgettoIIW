@@ -30,7 +30,6 @@ static void *selective_repeat_sender(void *arg)
 			/* buffer circolare vuoto */
 			usleep(100000);
 		}
-pw
 		pkt_t pkt = cb->cb_node[cb->S].pkt;
 
 		if (window_not_full(0, 0, 0)){ // TODO: window_not_full da implementare
@@ -79,8 +78,6 @@ static pkt_t create_pkt(int fd, int nseq)
 {
     char buff[MAX_PAYLOAD_SIZE];
 
-    printf("Reading from file...\n");
-
     u64 read_byte = read_block(fd,buff, MAX_PAYLOAD_SIZE);
 
     if (read_byte < MAX_PAYLOAD_SIZE){
@@ -94,7 +91,7 @@ static pkt_t create_pkt(int fd, int nseq)
 
     pkt_t pkt;
     pkt.header = header;
-    strcpy(pkt.payload, buff);
+    strncpy(pkt.payload, buff, read_byte);
 
     return pkt;
 }
@@ -121,8 +118,6 @@ static void *split_file(void *arg)
 
 		cb->cb_node[cb->E] = cbn;
 		cb->E = nE;
-
-		printf("%c\n", pkt.payload[1]);
 	}
 }
 
