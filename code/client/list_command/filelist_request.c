@@ -6,7 +6,6 @@
 int request_filelist(void)
 {
     printf("request_filelist function\n");
-    send_pkt();
     return 1;
 }
 

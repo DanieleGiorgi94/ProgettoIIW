@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -O2
+CFLAGS=-Wall -Wextra -O2 -pthread
 CFILES=$(shell ls *.c)
 LIBCFILES=$(shell ls ../common/posix_library/*.c)
 COMMCFILES=$(shell ls ../common/*.c)

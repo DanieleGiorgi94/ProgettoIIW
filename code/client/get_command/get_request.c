@@ -6,6 +6,5 @@
 int request_file(void)
 {
     printf("request_file function\n");
-    send_pkt();
     return 1;
 }
