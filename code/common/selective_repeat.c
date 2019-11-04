@@ -7,7 +7,7 @@ u64 nextseqnum; // numero di sequenza del prossimo pachetto da inviare
 
 static void *selective_repeat_sender(void *);
 static void *selective_repeat_receiver(void *);
-static pkt_t create_pkt(int);
+static pkt_t create_pkt(int, int);
 static void *split_file(void *);
 static void *merge_file(void *);
 static u64 get_ack_seqnum(ack_t);
@@ -25,12 +25,12 @@ static void *selective_repeat_sender(void *arg)
 
 	// TODO: creo thread invio/ricezione
 
-	for(;;){
+	for(int i = 0; i < 10000; i++){
 		while (cb->S == cb->E){
 			/* buffer circolare vuoto */
 			usleep(100000);
 		}
-
+pw
 		pkt_t pkt = cb->cb_node[cb->S].pkt;
 
 		if (window_not_full(0, 0, 0)){ // TODO: window_not_full da implementare
@@ -75,20 +75,28 @@ static void *selective_repeat_receiver(void *arg)
 }
 
 //static pkt_t create_pkt(int fd)
-static pkt_t create_pkt(int fd)
+static pkt_t create_pkt(int fd, int nseq)
 {
-    fd = fd;
- // TODO: implementare read dal file e scrittura nel pacchetto
+    char buff[MAX_PAYLOAD_SIZE];
+
+    printf("Reading from file...\n");
+
+    u64 read_byte = read_block(fd,buff, MAX_PAYLOAD_SIZE);
+
+    if (read_byte < MAX_PAYLOAD_SIZE){
+        pthread_exit(NULL);
+    }
     header_t header;
-    header.n_seq = 0;
-    header.length = 0;
+    header.n_seq = nseq;
+    header.length = (u32) read_byte;
     header.rwnd = 0;
     header.type = 0;
 
-    pkt_t tmp;
-    tmp.header = header;
+    pkt_t pkt;
+    pkt.header = header;
+    strcpy(pkt.payload, buff);
 
-    return tmp;
+    return pkt;
 }
 
 static void *split_file(void *arg)
@@ -97,8 +105,8 @@ static void *split_file(void *arg)
 	struct circular_buffer *cb = ptd->cb;
 	int fd = ptd->fd;
 	
-	for(;;){
-		pkt_t pkt = create_pkt(fd);
+	for(int i = 0;1;i++){
+		pkt_t pkt = create_pkt(fd, i);
 		int nE;
 
 		nE = (cb->E + 1) % BUFFER_SIZE;
@@ -113,9 +121,9 @@ static void *split_file(void *arg)
 
 		cb->cb_node[cb->E] = cbn;
 		cb->E = nE;
-	}
 
-	return NULL;
+		printf("%c\n", pkt.payload[1]);
+	}
 }
 
 static void *merge_file(void *arg)

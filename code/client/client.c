@@ -1,6 +1,6 @@
 #include "header.h"
 
-int main(void)
+int main(int argc, char **argv)
 {
     /*int r = request_filelist();
     print_error("request_filelist:", &r);
@@ -20,9 +20,15 @@ int main(void)
     free(list);
     */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
     struct sockaddr_in servaddr; //IPv4 address
     int   sockfd, n;
-    char  recvline[MAXLINE + 1];
+
+    #define PORT   5193
+
 
     if (argc < 2 ) { /* controlla numero degli argomenti */
         fprintf(stderr, "utilizzo: ./client <indirizzo IP server>\n");
@@ -41,15 +47,18 @@ int main(void)
     servaddr.sin_port = htons(PORT); //assegna porta server
     // htons permette di tener conto automaticamente della possibile differenza fra l’ordinamento usato sul computer
     // e quello che viene utilizzato nella trasmissione sulla rete
-    slen = sizeof(servaddr);
+    u64 slen = sizeof(servaddr);
 
     /* inet_aton, unlike inet_pton, allow the more general numbers-and-dots notation (hexadecimal, etc)
      * but it does not recognize IPv6 addresses */
-    if (inet_aton(SERVER , &servaddr.sin_addr) == 0) {
-        fprintf(stderr, "Invalid address\n");
+    if (inet_pton(AF_INET, argv[1], &servaddr.sin_addr) <= 0) {
+        /* inet_pton (p=presentation) vale anche per indirizzi IPv6 */
+        fprintf(stderr, "errore in inet_pton per %s", argv[1]);
         exit(EXIT_FAILURE);
     }
+    int fd = open_file(PATH, O_RDONLY);
 
+    send_file(sockfd, (struct sockaddr *) &servaddr, fd);
 
 
     return EXIT_SUCCESS;
