@@ -1,4 +1,25 @@
 #include "header.h"
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
+#define PORT   5193
+#define BUFLEN 512
+
+
+char ** tokenize_string(char *buffer,char *delimiter){
+
+    int i = 0;
+    char **token_vector = dynamic_allocation(BUFLEN * sizeof(char*));
+
+    token_vector[i] = strtok(buffer,delimiter);
+    while(token_vector[i]!= NULL) {
+        i++;
+        token_vector[i] = strtok(NULL,delimiter);
+    }
+
+    return token_vector;
+}
 
 int main(int argc, char **argv)
 {
@@ -20,14 +41,12 @@ int main(int argc, char **argv)
     free(list);
     */
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+    char message[BUFLEN];
+
+    char **token_vector;
 
     struct sockaddr_in servaddr; //IPv4 address
     int   sockfd, n;
-
-    #define PORT   5193
 
 
     if (argc < 2 ) { /* controlla numero degli argomenti */
@@ -56,11 +75,76 @@ int main(int argc, char **argv)
         fprintf(stderr, "errore in inet_pton per %s", argv[1]);
         exit(EXIT_FAILURE);
     }
-    int fd = open_file(PATH, O_RDONLY);
 
-    send_file(sockfd, (struct sockaddr *) &servaddr, fd); //invia file al buffer circolare
+    printf("Welcome to our server! IP: %s PORT: %d\n", inet_ntoa(servaddr.sin_addr), ntohs(servaddr.sin_port));
+    RESET:
+    printf("\n+----------------------------------------------------------------------------------+\n|"
+           "ELENCO  COMANDI:""                                                                  |");
+    printf("\n+----------------------------------------------------------------------------------+\n"
+           "| 1) list: elenco dei file presenti nel Server                                     |\n"
+           "| 2) get <Filename>: Download del file                                             |\n"
+           "| 3) put <Filename>: Upload del file                                               |\n"
+           "| 4) exit                                                                          |\n"
+           "+----------------------------------------------------------------------------------+");
 
-    close_file(fd);
+    printf("\nENTER MESSAGE:\n>> ");
+
+    if (fgets(message, BUFLEN, stdin) == NULL && errno != EINTR) {
+        perror("fgets");
+        exit(EXIT_FAILURE);
+    }
+
+    int len = (int) strlen(message)-1;
+
+
+    if (message[len] == '\n') {
+        message[len] = '\0';
+    }
+
+    token_vector = tokenize_string(message, " ");
+
+
+    if (strncmp(token_vector[0], "list", 5) == 0) {
+
+        printf("Received LIST command...\n");
+        goto RESET;
+    }
+
+    if (strncmp(token_vector[0], "get", 4) == 0) {
+
+        printf("Received GET command...\n");
+        goto RESET;
+    }
+
+    if (strncmp(token_vector[0], "put", 4) == 0) {
+
+        printf("Received GET command...\n");
+
+        int fd = open_file(PATH, O_RDONLY);
+
+        send_file(sockfd, (struct sockaddr *) &servaddr, fd); //invia file al buffer circolare
+
+        close_file(fd);
+
+        goto RESET;
+    }
+
+    if (strncmp(token_vector[0], "exit", 5) == 0) {
+
+        printf("Processing exit from server...\n");
+        usleep_for(1000000);
+        printf("Bye\n");
+
+        exit(EXIT_SUCCESS);
+    }
+
+    if (strncmp(token_vector[0], "list", 5) != 0 && strncmp(token_vector[0], "get", 4) != 0 &&
+        strncmp(token_vector[0], "exit", 5) && strncmp(token_vector[0], "put", 4) != 0) {
+
+        fprintf(stderr, "Please insert a valid command.\n");
+        goto RESET;
+    }
+
 
     return EXIT_SUCCESS;
 }
