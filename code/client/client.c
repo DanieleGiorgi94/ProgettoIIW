@@ -58,8 +58,9 @@ int main(int argc, char **argv)
     }
     int fd = open_file(PATH, O_RDONLY);
 
-    send_file(sockfd, (struct sockaddr *) &servaddr, fd);
+    send_file(sockfd, (struct sockaddr *) &servaddr, fd); //invia file al buffer circolare
 
+    close_file(fd);
 
     return EXIT_SUCCESS;
 }

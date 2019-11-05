@@ -69,20 +69,18 @@ static void *selective_repeat_receiver(void *arg)
 		cb->cb_node[cb->E] = cbn;
 		cb->E = nE;
 	}
-
-	return NULL;
 }
 
-//static pkt_t create_pkt(int fd)
 static pkt_t create_pkt(int fd, int nseq)
 {
     char buff[MAX_PAYLOAD_SIZE];
 
-    u64 read_byte = read_block(fd,buff, MAX_PAYLOAD_SIZE);
+    u64 read_byte = read_block(fd,buff, MAX_PAYLOAD_SIZE); //Legge dal file e crea pacchetti di dim MAX_PAYLOAD_SIZE
 
     if (read_byte < MAX_PAYLOAD_SIZE){
         pthread_exit(NULL);
     }
+
     header_t header;
     header.n_seq = nseq;
     header.length = (u32) read_byte;
@@ -106,6 +104,8 @@ static void *split_file(void *arg)
 		pkt_t pkt = create_pkt(fd, i);
 		int nE;
 
+		//printf("pkt %d created\n", i);
+
 		nE = (cb->E + 1) % BUFFER_SIZE;
 		while (nE == cb->S){
 			/* buffer circolare pieno */
@@ -127,6 +127,7 @@ static void *merge_file(void *arg)
 	struct circular_buffer *cb = ptd->cb;
 	int fd = ptd->fd;
     int acked;
+    u64 written_byte;
 
 	for(;;){
 		while (cb->S == cb->E){
@@ -137,12 +138,17 @@ static void *merge_file(void *arg)
 		acked = cb->cb_node[cb->S].acked;
 		if (acked != 0){
 			pkt_t pkt = cb->cb_node[cb->S].pkt;
-			// TODO: scrivere dati del pacchetto sul file
+
+			//printf("Reading pkt %d from cb\n", pkt.header.n_seq);
+
+			written_byte = write_block(fd, pkt.payload, MAX_PAYLOAD_SIZE);
+
+			if (written_byte < MAX_PAYLOAD_SIZE)
+			    pthread_exit(NULL);
+
 			cb->S = (cb->S + 1) % BUFFER_SIZE;
 		}
 	}
-
-	return NULL;
 
 }
 

@@ -2,16 +2,16 @@
 
 int main(int argc, char **argv)
 {
-   /* printf("Server!\n");
+    /* printf("Server!\n");
 
-    int r = send_file_to_client();
-    print_error("send_file_to_client:", &r);
-    r = send_filelist_to_client();
-    print_error("send_filelist_to_client:", &r);
-    r = receive_file_from_client();
-    print_error("receive_file_from_client:", &r);
+     int r = send_file_to_client();
+     print_error("send_file_to_client:", &r);
+     r = send_filelist_to_client();
+     print_error("send_filelist_to_client:", &r);
+     r = receive_file_from_client();
+     print_error("receive_file_from_client:", &r);
 
-    return EXIT_SUCCESS;*/
+     return EXIT_SUCCESS;*/
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -22,12 +22,12 @@ int main(int argc, char **argv)
     struct sockaddr_in addr;
     time_t ticks;
 
-    #define PORT   5193
+#define PORT   5193
 
 
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) { /* crea il socket */
         perror("errore in socket");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     memset((void *)&addr, 0, sizeof(addr));
@@ -38,12 +38,16 @@ int main(int argc, char **argv)
     /* assegna l'indirizzo al socket */
     if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
         perror("errore in bind");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
-    while(1){
+    //int fd = open_file("/Users/Daniele-Giorgi/Desktop/prova.txt", O_WRONLY | O_CREAT);//file in scrittura pkt ricevuti da cb
+
+    receive_file(sockfd,(struct sockaddr *) &addr, STDOUT_FILENO);
+
+    /*while(1){
         usleep_for(100000);
-    }
+    }*/
 
     exit(EXIT_SUCCESS);
 
