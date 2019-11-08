@@ -96,6 +96,11 @@ int main(int argc, char **argv)
 
     int len = (int) strlen(message)-1;
 
+    if (len < 4){
+	fprintf(stderr, "Please insert a valid command.\n");
+	goto RESET;
+    }
+
 
     if (message[len] == '\n') {
         message[len] = '\0';
@@ -113,18 +118,19 @@ int main(int argc, char **argv)
     if (strncmp(token_vector[0], "get", 4) == 0) {
 
         printf("Received GET command...\n");
-        goto RESET;
-    }
-
-    if (strncmp(token_vector[0], "put", 4) == 0) {
-
-        printf("Received GET command...\n");
 
         int fd = open_file(PATH, O_RDONLY);
 
         send_file(sockfd, (struct sockaddr *) &servaddr, fd); //invia file al buffer circolare
 
         close_file(fd);
+
+        goto RESET;
+    }
+
+    if (strncmp(token_vector[0], "put", 4) == 0) {
+
+        printf("Received PUT command...\n");
 
         goto RESET;
     }
