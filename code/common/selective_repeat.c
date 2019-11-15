@@ -8,6 +8,10 @@ static void *selective_repeat_receiver(void *);
 static pkt_t create_pkt(int, int);
 static void *split_file(void *);
 static void *merge_file(void *);
+static void send_pkt(int, pkt_t *,const struct sockaddr *);
+static void send_ack(int, struct sockaddr, u64);
+static void *receive_ack(void *);
+static void sorted_buf_insertion(struct circular_buffer *, struct buf_node *, u64);
 
 static void *selective_repeat_sender(void *arg)
 {
@@ -15,12 +19,11 @@ static void *selective_repeat_sender(void *arg)
 	struct circular_buffer *cb = ptd->cb;
 	int sockfd = ptd->sockfd;
     	const struct sockaddr *servaddr = ptd->servaddr;
-	u64 base, nextseqnum;
 	struct ackrec_thread_data ackrec;
 	int n;
 
 	ackrec.sockfd = sockfd;
-	ackrec.servaddr = servaddr;
+	ackrec.servaddr = ptd->servaddr;
 	/* ricezione dell'ack */
 	if (pthread_create(&ackrec.tid, NULL, receive_ack, &ackrec) != 0){
 		perror("Errore in pthread_create()\n");
@@ -55,9 +58,10 @@ static void *selective_repeat_sender(void *arg)
 	return NULL;
 }
 
-void send_pkt(int sockfd, pkt_t *pkt, sockaddr *servaddr)
+static void send_pkt(int sockfd, pkt_t *pkt, const struct sockaddr *servaddr)
 {
-	if (sendto(sockfd, pkt, sizeof(pkt_t), 0, servaddr, sizeof(struct sockaddr)) < 0){
+	if (sendto(sockfd, pkt, sizeof(pkt_t), 0, (struct sockaddr *)servaddr,
+			       sizeof(struct sockaddr)) < 0){
 		perror("Errore in sendto()");
 		exit(EXIT_FAILURE);
 	}
@@ -77,7 +81,7 @@ static void *selective_repeat_receiver(void *arg)
 		pkt_t *pkt = (pkt_t *) dynamic_allocation(sizeof(pkt_t));
 
 		// ricezione pacchetto
-		if (recvfrom(sockfd, (void *)pkt, sizeof(pkt_t), 0, servaddr, sizeof(*servaddr)) < 0){
+		if (recvfrom(sockfd, (void *)pkt, sizeof(pkt_t), 0, NULL, NULL) < 0){
 			perror("Errore in recvfrom()");
 			exit(EXIT_FAILURE);
 		}
@@ -91,20 +95,17 @@ static void *selective_repeat_receiver(void *arg)
 		struct buf_node cbn;
 		cbn.pkt = *pkt;
 		cbn.acked = 1;
-		seqnum = pkt->n_seq;
+		seqnum = pkt->header.n_seq;
 
 		// invio ack
 		send_ack(sockfd, *servaddr, seqnum);
 
 		// ordinamento dei pacchetti ricevuti
-		// TODO: togliere commento
-		// sorted_buf_insertion(cb, &cbn, seqnum);
-		cb->cb_node[cb->E] = cbn;
-		cb->E = nE;
+		sorted_buf_insertion(cb, &cbn, seqnum);
 	}
 }
 
-void send_ack(int sockfd, struct sockaddr servaddr, u64 seqnum){
+static void send_ack(int sockfd, struct sockaddr servaddr, u64 seqnum){
 	ack_t ack;
 	/* inizializzazione area di memoria per ack */
 	memset((void *)&ack, 0, sizeof(ack));
@@ -117,9 +118,9 @@ void send_ack(int sockfd, struct sockaddr servaddr, u64 seqnum){
 	}
 }
 
-void *receive_ack(void *arg)
+static void *receive_ack(void *arg)
 {
-	ackrec_thread_data *ackrec = arg;
+	struct ackrec_thread_data *ackrec = arg;
 	int n;
 	ack_t *ack = dynamic_allocation(sizeof(ack_t));
 	u64 seqnum;
@@ -129,7 +130,7 @@ void *receive_ack(void *arg)
 	struct circular_buffer *cb = ackrec->cb;
 
 	while(1) {
-		n = recvfrom(sockfd, ack, sizeof(ack_t), 0, servaddr, sizeof(struct sockaddr), NULL);
+		n = recvfrom(sockfd, ack, sizeof(ack_t), 0, NULL, NULL);
 		if (n < 0) {
 			perror("Errore in recvfrom: ricezione dell'ack");
 			exit(EXIT_FAILURE);
@@ -149,7 +150,7 @@ void *receive_ack(void *arg)
 	return NULL;	
 }
 
-void sorted_buf_insertion(struct circular_buffer *cb, struct buf_node *cbn, u64 seqnum)
+static void sorted_buf_insertion(struct circular_buffer *cb, struct buf_node *cbn, u64 seqnum)
 {
 	int tmp_seqnum;
 	pkt_t current_pkt;
@@ -166,7 +167,7 @@ void sorted_buf_insertion(struct circular_buffer *cb, struct buf_node *cbn, u64 
 		cb->E = (cb->E + 1) % BUFFER_SIZE;
 	} else {
 		current_pkt = cb->cb_node[cb->S].pkt;
-		tmp_seqnum = current_pkt.n_seq;
+		tmp_seqnum = current_pkt.header.n_seq;
 		i = seqnum - tmp_seqnum;
 
 		if (i < BUFFER_SIZE){

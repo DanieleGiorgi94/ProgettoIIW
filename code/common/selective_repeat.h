@@ -23,7 +23,7 @@ struct ackrec_thread_data {
 	struct sockaddr *servaddr; // indirizzo del server
 	struct circular_buffer *cb;
 	pthread_t tid;
-}
+};
 
 struct buf_node {
 	pkt_t pkt;
