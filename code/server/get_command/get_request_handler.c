@@ -6,6 +6,5 @@
 int send_file_to_client(void)
 {
     printf("send_file_to_client function\n");
-    send_pkt();
     return 1;
 }

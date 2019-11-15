@@ -2,4 +2,4 @@
 #error You must not include this sub-header file directly
 #endif
 
-int request_file(void);
+int request_file(struct sockaddr_in, int);

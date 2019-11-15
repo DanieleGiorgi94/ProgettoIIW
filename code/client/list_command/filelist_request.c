@@ -5,9 +5,6 @@
 */
 int request_filelist(void)
 {
-    printf("request_filelist function\n");
+    printf("Received LIST command...\n");
     return 1;
 }
-
-
-
