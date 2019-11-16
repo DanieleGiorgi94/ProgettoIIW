@@ -32,7 +32,7 @@ static void *selective_repeat_sender(void *arg)
 
 	n = cb->S; // inizializzazione indice del paccheto da inviare
 	
-	for(int i = 0; i<10; i++){
+	for(int i = 0; 1; i++){
 		while (cb->S == cb->E){
 			/* buffer circolare vuoto */
 			usleep(100000);
@@ -120,9 +120,9 @@ static void send_ack(int sockfd, struct sockaddr servaddr, u64 seqnum){
 static void *receive_ack(void *arg)
 {
 	struct ackrec_thread_data *ackrec = arg;
-	int n;
+	int n, i;
 	ack_t *ack = dynamic_allocation(sizeof(ack_t));
-	u64 seqnum;
+	u64 seqnum, tmp_seqnum;
 	
 	int sockfd = ackrec->sockfd;
 	struct sockaddr *servaddr = ackrec->servaddr;
@@ -134,9 +134,10 @@ static void *receive_ack(void *arg)
 			perror("Errore in recvfrom: ricezione dell'ack");
 			exit(EXIT_FAILURE);
 		} else {
-    			seqnum = ack->n_seq;
-			/* implementa ricerca del pacchetto nel buffer */
-			/* metti flag acked a 1 */
+    			tmp_seqnum = cb->cb_node[cb->S].pkt.header.n_seq;
+			seqnum = ack->n_seq;
+			i = seqnum - tmp_seqnum;
+			cb->cb_node[(cb->S + i) % BUFFER_SIZE].acked = 1;
 
 			while (cb->cb_node[cb->S].acked == 1){
 				cb->S = (cb->S + 1) % BUFFER_SIZE;	
