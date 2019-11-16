@@ -96,7 +96,7 @@ int main(int argc, char **argv)
 
     int len = (int) strlen(message)-1;
 
-    if (len < 4){
+    if (len < 3){
 	fprintf(stderr, "Please insert a valid command.\n");
 	goto RESET;
     }
@@ -107,7 +107,6 @@ int main(int argc, char **argv)
     }
 
     token_vector = tokenize_string(message, " ");
-
 
     if (strncmp(token_vector[0], "list", 5) == 0) {
 

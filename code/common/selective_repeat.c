@@ -248,7 +248,7 @@ static void *merge_file(void *arg)
 		if (acked != 0){
 			pkt_t pkt = cb->cb_node[cb->S].pkt;
 
-			//printf("Reading pkt %d from cb\n", pkt.header.n_seq);
+			//printf("Reading pkt %lu from cb\n", pkt.header.n_seq);
 
 			written_byte = write_block(fd, pkt.payload, MAX_PAYLOAD_SIZE);
 

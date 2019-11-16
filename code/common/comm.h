@@ -8,5 +8,5 @@ char *list_dir(char *PATH);
 int check_file(char *file, char *list);
 void send_file(int, struct sockaddr *, int);
 void receive_file(int, struct sockaddr *, int);
-void send_ack(int, struct sockaddr, u64);
-ack_t recv_ack(int, struct sockaddr);
+/*void send_ack(int, struct sockaddr, u64);
+ack_t recv_ack(int, struct sockaddr);*/

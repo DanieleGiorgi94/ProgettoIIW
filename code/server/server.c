@@ -1,4 +1,10 @@
+#define PORT   5193
+
 #include "header.h"
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
 
 int main(int argc, char **argv)
 {
@@ -13,16 +19,9 @@ int main(int argc, char **argv)
 
      return EXIT_SUCCESS;*/
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-
     int sockfd;
     socklen_t len;
     struct sockaddr_in addr;
-    time_t ticks;
-
-#define PORT   5193
 
 
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) { /* crea il socket */
