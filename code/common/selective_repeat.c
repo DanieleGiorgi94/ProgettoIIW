@@ -172,7 +172,7 @@ static void sorted_buf_insertion(struct circular_buffer *cb, struct buf_node *cb
 		if (i < BUFFER_SIZE){
 			cb->cb_node[(cb->S + i) % BUFFER_SIZE] = *cbn;	
 			if (i >= I - cb->S){
-				cb->E = (cb->E + i) % BUFFER_SIZE;
+				cb->E = (cb->S + i + 1) % BUFFER_SIZE;
 			}
 		}
 	}	
