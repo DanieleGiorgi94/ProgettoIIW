@@ -32,7 +32,7 @@ static void *selective_repeat_sender(void *arg)
 
 	n = cb->S; // inizializzazione indice del paccheto da inviare
 	
-	for(int i = 0; 1; i++){
+	for(int i = 0; i<10; i++){
 		while (cb->S == cb->E){
 			/* buffer circolare vuoto */
 			usleep(100000);
@@ -65,7 +65,6 @@ static void send_pkt(int sockfd, pkt_t *pkt, const struct sockaddr *servaddr)
 		perror("Errore in sendto()");
 		exit(EXIT_FAILURE);
 	}
-
 }
 
 static void *selective_repeat_receiver(void *arg)
