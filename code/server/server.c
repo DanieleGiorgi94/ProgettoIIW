@@ -40,9 +40,9 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    //int fd = open_file("/Users/Daniele-Giorgi/Desktop/prova.txt", O_WRONLY | O_CREAT);//file in scrittura pkt ricevuti da cb
+    int fd = open_file("/home/stefano/Documenti/prova.txt", O_WRONLY | O_CREAT);//file in scrittura pkt ricevuti da cb
 
-    receive_file(sockfd,(struct sockaddr *) &addr, STDOUT_FILENO);
+    receive_file(sockfd,(struct sockaddr *) &addr,fd);
 
     /*while(1){
         usleep_for(100000);

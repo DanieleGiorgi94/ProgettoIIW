@@ -5,7 +5,7 @@ u64 nextseqnum; // numero di sequenza del prossimo pachetto da inviare
 
 static void *selective_repeat_sender(void *);
 static void *selective_repeat_receiver(void *);
-static pkt_t create_pkt(int, int);
+static pkt_t create_pkt(int, u64);
 static void *split_file(void *);
 static void *merge_file(void *);
 static void send_pkt(int, pkt_t *,const struct sockaddr *);
@@ -23,7 +23,7 @@ static void *selective_repeat_sender(void *arg)
 	int n;
 
 	ackrec.sockfd = sockfd;
-	ackrec.servaddr = ptd->servaddr;
+
 	/* ricezione dell'ack */
 	if (pthread_create(&ackrec.tid, NULL, receive_ack, &ackrec) != 0){
 		perror("Errore in pthread_create()\n");
@@ -32,7 +32,7 @@ static void *selective_repeat_sender(void *arg)
 
 	n = cb->S; // inizializzazione indice del paccheto da inviare
 	
-	for(int i = 0; 1; i++){
+	for(;;){
 		while (cb->S == cb->E){
 			/* buffer circolare vuoto */
 			usleep(100000);
@@ -125,7 +125,6 @@ static void *receive_ack(void *arg)
 	u64 seqnum, tmp_seqnum;
 	
 	int sockfd = ackrec->sockfd;
-	struct sockaddr *servaddr = ackrec->servaddr;
 	struct circular_buffer *cb = ackrec->cb;
 
 	while(1) {
@@ -136,6 +135,9 @@ static void *receive_ack(void *arg)
 		} else {
     			tmp_seqnum = cb->cb_node[cb->S].pkt.header.n_seq;
 			seqnum = ack->n_seq;
+			
+			printf("ack %ld ricevuto\n", seqnum);
+
 			i = seqnum - tmp_seqnum;
 			cb->cb_node[(cb->S + i) % BUFFER_SIZE].acked = 1;
 
@@ -152,9 +154,9 @@ static void *receive_ack(void *arg)
 
 static void sorted_buf_insertion(struct circular_buffer *cb, struct buf_node *cbn, u64 seqnum)
 {
-	int tmp_seqnum;
+	u64 tmp_seqnum;
 	pkt_t current_pkt;
-	int i;
+	u64 i;
 	int I; // indice temporaneo per ricerca nel buffer
 	if (cb->E < cb->S){
 		I = cb->E + BUFFER_SIZE;
@@ -180,7 +182,7 @@ static void sorted_buf_insertion(struct circular_buffer *cb, struct buf_node *cb
 }
 
 
-static pkt_t create_pkt(int fd, int nseq)
+static pkt_t create_pkt(int fd, u64 nseq)
 {
     char buff[MAX_PAYLOAD_SIZE];
 
@@ -209,7 +211,7 @@ static void *split_file(void *arg)
 	struct circular_buffer *cb = ptd->cb;
 	int fd = ptd->fd;
 	
-	for(int i = 0;1;i++){
+	for(u64 i = 0;1;i++){
 		pkt_t pkt = create_pkt(fd, i);
 		int nE;
 
@@ -228,6 +230,8 @@ static void *split_file(void *arg)
 		cb->cb_node[cb->E] = cbn;
 		cb->E = nE;
 	}
+
+	return NULL;
 }
 
 static void *merge_file(void *arg)
@@ -245,6 +249,7 @@ static void *merge_file(void *arg)
 		}
 
 		acked = cb->cb_node[cb->S].acked;
+		printf("acked = %d per pacchetto %d\n",acked, cb->S);
 		if (acked != 0){
 			pkt_t pkt = cb->cb_node[cb->S].pkt;
 
@@ -265,11 +270,14 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd)
 {
 	struct SR_thread_data SR_td;
 	struct sender_thread_data sender_td;
-	pthread_t self_tid = pthread_self();
 
 	struct circular_buffer *cb;
 	cb = (struct circular_buffer *)
         dynamic_allocation(sizeof(struct circular_buffer));
+	cb->E = 0;
+	cb->S = 0;
+	cb->base = 0;
+	cb->nextseqnum = 0;
 
 	// inizializzazione dei thread
 	SR_td.cb = cb;
@@ -296,11 +304,14 @@ void receive_file(int sockfd, struct sockaddr *servaddr, int fd)
 {
 	struct SR_thread_data SR_td;
 	struct sender_thread_data receiver_td;
-	pthread_t self_tid = pthread_self();
 
 	struct circular_buffer *cb;
 	cb = (struct circular_buffer *)
         dynamic_allocation(sizeof(struct circular_buffer));
+	cb->S = 0;
+	cb->E = 0;
+	cb->base = 0;
+	cb->nextseqnum = 0;
 
 	// inizializzazione dei thread
 	SR_td.cb = cb;

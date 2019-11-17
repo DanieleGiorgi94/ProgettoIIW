@@ -20,7 +20,6 @@ struct sender_thread_data { // dati del client/server
 
 struct ackrec_thread_data {
 	int sockfd; // descrittore della socket
-	struct sockaddr *servaddr; // indirizzo del server
 	struct circular_buffer *cb;
 	pthread_t tid;
 };
