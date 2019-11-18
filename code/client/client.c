@@ -147,7 +147,7 @@ int main(int argc, char **argv)
         strncmp(token_vector[0], "exit", 5) && strncmp(token_vector[0], "put", 4) != 0) {
 
         fprintf(stderr, "Please insert a valid command.\n");
-        goto RESET;
+        //goto RESET;
     }
 
 

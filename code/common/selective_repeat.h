@@ -4,6 +4,7 @@
 
 #define BUFFER_SIZE 2048
 #define WINDOW_SIZE 1024
+#define TIMEOUT = 10
 
 struct SR_thread_data { // dati della selective repeat
 	int sockfd; // descrittore della socket
@@ -30,8 +31,8 @@ struct buf_node {
 };
 
 struct circular_buffer {
-	int E;
-	int S;
+	u32 E;
+	u32 S;
 	u64 base;
 	u64 nextseqnum;
 	struct buf_node cb_node[BUFFER_SIZE];

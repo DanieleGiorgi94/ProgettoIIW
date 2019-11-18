@@ -1,8 +1,5 @@
 #include "reliable_udp.h"
 
-u64 send_base; // Piu' vecchio pacchetto che non ha ricevuto ack
-u64 nextseqnum; // numero di sequenza del prossimo pachetto da inviare
-
 static void *selective_repeat_sender(void *);
 static void *selective_repeat_receiver(void *);
 static pkt_t create_pkt(int, u64);
@@ -12,6 +9,7 @@ static void send_pkt(int, pkt_t *,const struct sockaddr *);
 static void send_ack(int, struct sockaddr, u64);
 static void *receive_ack(void *);
 static void sorted_buf_insertion(struct circular_buffer *, struct buf_node *, u64);
+void alarm_handler(int);
 
 static void *selective_repeat_sender(void *arg)
 {
@@ -20,7 +18,7 @@ static void *selective_repeat_sender(void *arg)
 	int sockfd = ptd->sockfd;
     	const struct sockaddr *servaddr = ptd->servaddr;
 	struct ackrec_thread_data ackrec;
-	int n;
+	u32 n;
 
 	ackrec.sockfd = sockfd;
 
@@ -65,6 +63,15 @@ static void send_pkt(int sockfd, pkt_t *pkt, const struct sockaddr *servaddr)
 		perror("Errore in sendto()");
 		exit(EXIT_FAILURE);
 	}
+	
+	printf("pkt %ld inviato\n", pkt->header.n_seq);
+	//alarm(TIMEOUT);
+}
+
+void alarm_handler(int sig)
+{
+	(void)sig;
+	// send_pkt();
 }
 
 static void *selective_repeat_receiver(void *arg)
@@ -74,34 +81,42 @@ static void *selective_repeat_receiver(void *arg)
 	int sockfd = ptd->sockfd;
     	const struct sockaddr *servaddr = ptd->servaddr;
 	u64 seqnum;
-	int nE;
+	u32 nE;
+	int n;
 
 	for(;;){
 		pkt_t *pkt = (pkt_t *) dynamic_allocation(sizeof(pkt_t));
 
 		// ricezione pacchetto
-		if (recvfrom(sockfd, (void *)pkt, sizeof(pkt_t), 0, NULL, NULL) < 0){
+		n = recvfrom(sockfd, (void *)pkt, sizeof(pkt_t), 0, NULL, NULL);
+		if (n < 0) {
 			perror("Errore in recvfrom()");
 			exit(EXIT_FAILURE);
 		}
+		if (n > 0) {
+			nE = (cb->E + 1) % BUFFER_SIZE;
+			while (nE == cb->S){
+				/* buffer circolare pieno */
+				usleep(100000);
+			}	
 
-		nE = (cb->E + 1) % BUFFER_SIZE;
-		while (nE == cb->S){
-			/* buffer circolare pieno */
-			usleep(100000);
+			struct buf_node cbn;
+			cbn.pkt = *pkt;
+			cbn.acked = 1;
+			seqnum = pkt->header.n_seq;
+
+			printf("pkt %ld di lunghezza %d ricevuto\nlmax = %ld\n", seqnum, n, sizeof(pkt_t));
+
+			// invio ack
+			send_ack(sockfd, *servaddr, seqnum);
+
+			// ordinamento dei pacchetti ricevuti
+			// sorted_buf_insertion(cb, &cbn, seqnum);
+
+			cb->cb_node[cb->E] = cbn;
+			cb->E = nE;
 		}
-
-		struct buf_node cbn;
-		cbn.pkt = *pkt;
-		cbn.acked = 1;
-		seqnum = pkt->header.n_seq;
-
-		// invio ack
-		send_ack(sockfd, *servaddr, seqnum);
-
-		// ordinamento dei pacchetti ricevuti
-		sorted_buf_insertion(cb, &cbn, seqnum);
-	}
+	}	
 }
 
 static void send_ack(int sockfd, struct sockaddr servaddr, u64 seqnum){
@@ -120,7 +135,8 @@ static void send_ack(int sockfd, struct sockaddr servaddr, u64 seqnum){
 static void *receive_ack(void *arg)
 {
 	struct ackrec_thread_data *ackrec = arg;
-	int n, i;
+	int n;
+        u64 i;
 	ack_t *ack = dynamic_allocation(sizeof(ack_t));
 	u64 seqnum, tmp_seqnum;
 	
@@ -132,11 +148,12 @@ static void *receive_ack(void *arg)
 		if (n < 0) {
 			perror("Errore in recvfrom: ricezione dell'ack");
 			exit(EXIT_FAILURE);
-		} else {
+		} 
+	        if (n > 0) {
     			tmp_seqnum = cb->cb_node[cb->S].pkt.header.n_seq;
 			seqnum = ack->n_seq;
 			
-			printf("ack %ld ricevuto\n", seqnum);
+			// printf("ack %ld ricevuto\n", seqnum);
 
 			i = seqnum - tmp_seqnum;
 			cb->cb_node[(cb->S + i) % BUFFER_SIZE].acked = 1;
@@ -157,7 +174,7 @@ static void sorted_buf_insertion(struct circular_buffer *cb, struct buf_node *cb
 	u64 tmp_seqnum;
 	pkt_t current_pkt;
 	u64 i;
-	int I; // indice temporaneo per ricerca nel buffer
+	u32 I; // indice temporaneo per ricerca nel buffer
 	if (cb->E < cb->S){
 		I = cb->E + BUFFER_SIZE;
 	} else {
@@ -213,7 +230,7 @@ static void *split_file(void *arg)
 	
 	for(u64 i = 0;1;i++){
 		pkt_t pkt = create_pkt(fd, i);
-		int nE;
+		u32 nE;
 
 		//printf("pkt %d created\n", i);
 
@@ -239,7 +256,7 @@ static void *merge_file(void *arg)
 	struct sender_thread_data *ptd = arg;
 	struct circular_buffer *cb = ptd->cb;
 	int fd = ptd->fd;
-  	int acked;
+  	char acked;
     	u64 written_byte;
 
 	for(;;){
@@ -249,11 +266,11 @@ static void *merge_file(void *arg)
 		}
 
 		acked = cb->cb_node[cb->S].acked;
-		printf("acked = %d per pacchetto %d\n",acked, cb->S);
-		if (acked != 0){
+		if (acked == 1){
 			pkt_t pkt = cb->cb_node[cb->S].pkt;
+			cb->cb_node[cb->S].acked = 0;
 
-			//printf("Reading pkt %lu from cb\n", pkt.header.n_seq);
+		//	printf("Reading pkt %ld from cb\n", pkt.header.n_seq);
 
 			written_byte = write_block(fd, pkt.payload, MAX_PAYLOAD_SIZE);
 
@@ -298,6 +315,8 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd)
 		exit(EXIT_FAILURE);
 	}
 
+	pthread_exit(EXIT_SUCCESS);
+
 }
 
 void receive_file(int sockfd, struct sockaddr *servaddr, int fd)
@@ -333,5 +352,6 @@ void receive_file(int sockfd, struct sockaddr *servaddr, int fd)
 		exit(EXIT_FAILURE);
 	}
 
+	pthread_exit(EXIT_SUCCESS);
 }
 
