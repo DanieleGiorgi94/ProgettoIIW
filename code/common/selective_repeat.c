@@ -35,17 +35,8 @@ static void *selective_repeat_sender(void *arg)
 	struct circular_buffer *cb = ptd->cb;
 	int sockfd = ptd->sockfd;
     	const struct sockaddr *servaddr = ptd->servaddr;
-	struct ackrec_thread_data ackrec;
-	u32 n;
+	u32 n;	
 
-	ackrec.sockfd = sockfd;
-
-	/* ricezione dell'ack */
-	if (pthread_create(&ackrec.tid, NULL, receive_ack, &ackrec) != 0){
-		perror("Errore in pthread_create()\n");
-		exit(EXIT_FAILURE);
-	}
-	
 	lock_buffer(cb);
 	n = cb->S; // inizializzazione indice del paccheto da inviare
 	unlock_buffer(cb);
@@ -71,11 +62,6 @@ static void *selective_repeat_sender(void *arg)
 			}
 		}
 		unlock_buffer(cb);
-	}
-
-	if (pthread_join(ackrec.tid, NULL) != 0){
-		perror("Errore in pthread_join()\n");
-		exit(EXIT_FAILURE);
 	}
 
 	return NULL;
@@ -336,8 +322,9 @@ static void *merge_file(void *arg)
 
 void send_file(int sockfd, struct sockaddr *servaddr, int fd)
 {
-	struct SR_thread_data SR_td;
-	struct sender_thread_data sender_td;
+	struct SR_thread_data SR_td; // thread che segmenta il file in pacchetti
+	struct sender_thread_data sender_td; // thread che invia i pacchetti
+	struct ackrec_thread_data ackrec; // thread che riceve gli ack
 
 	struct circular_buffer *cb;
 	cb = (struct circular_buffer *)
@@ -355,18 +342,23 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd)
 	// inizializzazione dei thread
 	SR_td.cb = cb;
 	sender_td.cb = cb;
+	ackrec.cb = cb;
 	SR_td.sockfd = sockfd;
+	ackrec.sockfd = sockfd;
 	SR_td.servaddr = servaddr;
+	ackrec.servaddr = servaddr;
 	sender_td.fd = fd;
 
-	if ((pthread_create(&sender_td.tid, NULL, split_file, &sender_td) != 0) ||
-		(pthread_create(&SR_td.tid, NULL, selective_repeat_sender, &SR_td) != 0)){
+	if ((pthread_create(&sender_td.tid, NULL, split_file, &sender_td) ||
+		pthread_create(&SR_td.tid, NULL, selective_repeat_sender, &SR_td) || 
+		pthread_create(&ackrec.tid, NULL, receive_ack, &ackrec)) != 0) {
 		perror("Errore in pthread_create()");
 		exit(EXIT_FAILURE);
 	}
 
-	if ((pthread_join(SR_td.tid, NULL) || 
-				pthread_join(sender_td.tid, NULL))!= 0){
+	if (pthread_join(SR_td.tid, NULL) || 
+				pthread_join(sender_td.tid, NULL) ||
+				pthread_join(ackrec.tid, NULL) != 0){
 		perror("Errore in pthread_join()");
 		exit(EXIT_FAILURE);
 	}
@@ -377,8 +369,9 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd)
 
 void receive_file(int sockfd, struct sockaddr *servaddr, int fd)
 {
-	struct SR_thread_data SR_td;
-	struct sender_thread_data receiver_td;
+	struct SR_thread_data SR_td; // thread che riceve i pacchetti
+	struct sender_thread_data receiver_td; // thread che scrive su file 
+					       // i pacchetti ricevuti
 
 	struct circular_buffer *cb;
 	cb = (struct circular_buffer *)
