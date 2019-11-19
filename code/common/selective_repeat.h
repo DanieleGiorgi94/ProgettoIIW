@@ -21,6 +21,7 @@ struct sender_thread_data { // dati del client/server
 
 struct ackrec_thread_data {
 	int sockfd; // descrittore della socket
+	struct sockaddr *servaddr;
 	struct circular_buffer *cb;
 	pthread_t tid;
 };
@@ -35,5 +36,6 @@ struct circular_buffer {
 	u32 S;
 	u64 base;
 	u64 nextseqnum;
+	pthread_mutex_t mtx;
 	struct buf_node cb_node[BUFFER_SIZE];
 };

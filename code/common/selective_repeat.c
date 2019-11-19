@@ -9,7 +9,25 @@ static void send_pkt(int, pkt_t *,const struct sockaddr *);
 static void send_ack(int, struct sockaddr, u64);
 static void *receive_ack(void *);
 static void sorted_buf_insertion(struct circular_buffer *, struct buf_node *, u64);
+static void lock_buffer(struct circular_buffer *);
+static void unlock_buffer(struct circular_buffer *);
 void alarm_handler(int);
+
+static void lock_buffer(struct circular_buffer *cb)
+{
+	if (pthread_mutex_lock(&cb->mtx) != 0){
+		perror("Errore in pthread_mutex_lock()\n");
+		exit(EXIT_FAILURE);
+	}
+}
+
+static void unlock_buffer(struct circular_buffer *cb)
+{
+	if (pthread_mutex_unlock(&cb->mtx) != 0){
+		perror("Errore in pthread_mutex_lock()\n");
+		exit(EXIT_FAILURE);
+	}
+}
 
 static void *selective_repeat_sender(void *arg)
 {
@@ -27,13 +45,19 @@ static void *selective_repeat_sender(void *arg)
 		perror("Errore in pthread_create()\n");
 		exit(EXIT_FAILURE);
 	}
-
-	n = cb->S; // inizializzazione indice del paccheto da inviare
 	
+	lock_buffer(cb);
+	n = cb->S; // inizializzazione indice del paccheto da inviare
+	unlock_buffer(cb);
+
 	for(;;){
+		lock_buffer(cb);
+
 		while (cb->S == cb->E){
 			/* buffer circolare vuoto */
+			unlock_buffer(cb);
 			usleep(100000);
+			lock_buffer(cb);
 		}
 
 		if (cb->nextseqnum < cb->base + WINDOW_SIZE){
@@ -46,6 +70,7 @@ static void *selective_repeat_sender(void *arg)
 				cb->nextseqnum = cb->cb_node[n].pkt.header.n_seq;
 			}
 		}
+		unlock_buffer(cb);
 	}
 
 	if (pthread_join(ackrec.tid, NULL) != 0){
@@ -59,7 +84,7 @@ static void *selective_repeat_sender(void *arg)
 static void send_pkt(int sockfd, pkt_t *pkt, const struct sockaddr *servaddr)
 {
 	if (sendto(sockfd, pkt, sizeof(pkt_t), 0, (struct sockaddr *)servaddr,
-			       sizeof(struct sockaddr)) < 0){
+			       sizeof(struct sockaddr)) < 0) {
 		perror("Errore in sendto()");
 		exit(EXIT_FAILURE);
 	}
@@ -80,53 +105,55 @@ static void *selective_repeat_receiver(void *arg)
 	struct circular_buffer *cb = ptd->cb;
 	int sockfd = ptd->sockfd;
     	const struct sockaddr *servaddr = ptd->servaddr;
+	unsigned int slen = sizeof(struct sockaddr);
 	u64 seqnum;
 	u32 nE;
 	int n;
+	pkt_t *pkt;
 
 	for(;;){
-		pkt_t *pkt = (pkt_t *) dynamic_allocation(sizeof(pkt_t));
-
+		pkt = (pkt_t *)dynamic_allocation(sizeof(pkt_t));
 		// ricezione pacchetto
-		n = recvfrom(sockfd, (void *)pkt, sizeof(pkt_t), 0, NULL, NULL);
+		n = recvfrom(sockfd, (void *)pkt, sizeof(pkt_t), 0,
+			       	(struct sockaddr *)servaddr, &slen);
 		if (n < 0) {
 			perror("Errore in recvfrom()");
 			exit(EXIT_FAILURE);
 		}
-		if (n > 0) {
-			nE = (cb->E + 1) % BUFFER_SIZE;
-			while (nE == cb->S){
-				/* buffer circolare pieno */
-				usleep(100000);
-			}	
 
-			struct buf_node cbn;
-			cbn.pkt = *pkt;
-			cbn.acked = 1;
-			seqnum = pkt->header.n_seq;
+		lock_buffer(cb);
 
-			printf("pkt %ld di lunghezza %d ricevuto\nlmax = %ld\n", seqnum, n, sizeof(pkt_t));
+		nE = (cb->E + 1) % BUFFER_SIZE;
+		while (nE == cb->S){
+			/* buffer circolare pieno */
+			unlock_buffer(cb);
+			usleep(100000);
+			lock_buffer(cb);
+		}	
 
-			// invio ack
-			send_ack(sockfd, *servaddr, seqnum);
+		struct buf_node cbn;
+		cbn.pkt = *pkt;
+		cbn.acked = 1;
+		seqnum = pkt->header.n_seq;
 
-			// ordinamento dei pacchetti ricevuti
-			// sorted_buf_insertion(cb, &cbn, seqnum);
+		printf("ricevuti %d byte! n_seq = %ld\n", n, seqnum);
 
-			cb->cb_node[cb->E] = cbn;
-			cb->E = nE;
-		}
+		// invio ack
+		send_ack(sockfd, *servaddr, seqnum);
+
+		// ordinamento dei pacchetti ricevuti
+		sorted_buf_insertion(cb, &cbn, seqnum);
+
+		unlock_buffer(cb);
 	}	
 }
 
 static void send_ack(int sockfd, struct sockaddr servaddr, u64 seqnum){
-	ack_t ack;
-	/* inizializzazione area di memoria per ack */
-	memset((void *)&ack, 0, sizeof(ack));
-	ack.n_seq = seqnum;
+	ack_t *ack = (ack_t *)dynamic_allocation(sizeof(ack_t));
+	ack->n_seq = seqnum;
 
 	/* invia il pacchetto contenente l'ack */
-	if (sendto(sockfd, &ack, sizeof(ack), 0, &servaddr, sizeof(servaddr)) < 0){
+	if (sendto(sockfd, (void *)ack, sizeof(ack_t), 0, &servaddr, sizeof(servaddr)) < 0){
 		perror("Errore in sendto: invio dell'ack");
 		exit(EXIT_FAILURE); 
 	}
@@ -137,32 +164,49 @@ static void *receive_ack(void *arg)
 	struct ackrec_thread_data *ackrec = arg;
 	int n;
         u64 i;
-	ack_t *ack = dynamic_allocation(sizeof(ack_t));
+	ack_t *ack = (ack_t *)dynamic_allocation(sizeof(ack_t));
 	u64 seqnum, tmp_seqnum;
+	unsigned int slen = sizeof(struct sockaddr);
 	
 	int sockfd = ackrec->sockfd;
+	struct sockaddr *servaddr = ackrec->servaddr;
 	struct circular_buffer *cb = ackrec->cb;
+	//cb = (struct circular_buffer *)dynamic_allocation(sizeof(struct circular_buffer));
 
+	u32 I; // indice temporaneo per ricerca nel buffer
+	
 	while(1) {
-		n = recvfrom(sockfd, ack, sizeof(ack_t), 0, NULL, NULL);
+		n = recvfrom(sockfd, (void *)ack, sizeof(ack_t), 0, servaddr, &slen);
 		if (n < 0) {
 			perror("Errore in recvfrom: ricezione dell'ack");
 			exit(EXIT_FAILURE);
 		} 
 	        if (n > 0) {
+			lock_buffer(cb);			
+
+			if (cb->S < cb->E){
+				I = cb->E + BUFFER_SIZE;
+			} else {
+				I = cb->E;
+			}
+
     			tmp_seqnum = cb->cb_node[cb->S].pkt.header.n_seq;
 			seqnum = ack->n_seq;
 			
-			// printf("ack %ld ricevuto\n", seqnum);
+			//printf("ack %ld ricevuto\n", seqnum);
 
 			i = seqnum - tmp_seqnum;
-			cb->cb_node[(cb->S + i) % BUFFER_SIZE].acked = 1;
+			if (cb->S + i < I){
+				cb->cb_node[(cb->S + i) % BUFFER_SIZE].acked = 1;
+			}
 
 			while (cb->cb_node[cb->S].acked == 1){
 				cb->S = (cb->S + 1) % BUFFER_SIZE;	
 			}
 			/* aggiorna base */
     			cb->base = cb->cb_node[cb->S].pkt.header.n_seq;
+
+			unlock_buffer(cb);
 		}
     	}
 
@@ -174,8 +218,9 @@ static void sorted_buf_insertion(struct circular_buffer *cb, struct buf_node *cb
 	u64 tmp_seqnum;
 	pkt_t current_pkt;
 	u64 i;
+
 	u32 I; // indice temporaneo per ricerca nel buffer
-	if (cb->E < cb->S){
+	if (cb->S < cb->E){
 		I = cb->E + BUFFER_SIZE;
 	} else {
 		I = cb->E;
@@ -232,12 +277,16 @@ static void *split_file(void *arg)
 		pkt_t pkt = create_pkt(fd, i);
 		u32 nE;
 
-		//printf("pkt %d created\n", i);
+		printf("pkt %ld created\n", i);
+		
+		lock_buffer(cb);
 
 		nE = (cb->E + 1) % BUFFER_SIZE;
 		while (nE == cb->S){
 			/* buffer circolare pieno */
+			unlock_buffer(cb);
 			usleep(100000);
+			lock_buffer(cb);
 		}
 
 		struct buf_node cbn;
@@ -246,6 +295,8 @@ static void *split_file(void *arg)
 
 		cb->cb_node[cb->E] = cbn;
 		cb->E = nE;
+		
+		unlock_buffer(cb);
 	}
 
 	return NULL;
@@ -296,6 +347,11 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd)
 	cb->base = 0;
 	cb->nextseqnum = 0;
 
+	if (pthread_mutex_init(&(cb->mtx), NULL) != 0){
+		perror("Errore in pthread_mutex_init()\n");
+		exit(EXIT_FAILURE);
+	}
+
 	// inizializzazione dei thread
 	SR_td.cb = cb;
 	sender_td.cb = cb;
@@ -331,6 +387,11 @@ void receive_file(int sockfd, struct sockaddr *servaddr, int fd)
 	cb->E = 0;
 	cb->base = 0;
 	cb->nextseqnum = 0;
+	
+	if (pthread_mutex_init(&(cb->mtx), NULL) != 0){
+		perror("Errore in pthread_mutex_init()\n");
+		exit(EXIT_FAILURE);
+	}
 
 	// inizializzazione dei thread
 	SR_td.cb = cb;
