@@ -13,6 +13,14 @@ static void lock_buffer(struct circular_buffer *);
 static void unlock_buffer(struct circular_buffer *);
 void alarm_handler(int);
 
+char sym_lost_pkt(void)
+{
+	/* simula perdita pacchetti con probabilita' LOSS_PROB */
+	int i = rand() % 101; // genera numero da 1 a 100
+	printf("%d\n", i);
+	return i <= LOSS_PROB;
+}
+
 static void lock_buffer(struct circular_buffer *cb)
 {
 	if (pthread_mutex_lock(&cb->mtx) != 0){
@@ -28,7 +36,19 @@ static void unlock_buffer(struct circular_buffer *cb)
 		exit(EXIT_FAILURE);
 	}
 }
+/*
+void start_timer(u32 index)
+{
+	// cb->cb_node[index].timer = time(NULL); 
+}
 
+void timeout_handler(float timer)
+{
+	if (time(NULL) - timer >= TIMEOUT){
+		// send_pkt();	
+	}
+}
+*/
 static void *selective_repeat_sender(void *arg)
 {
 	struct SR_thread_data *ptd = arg;
@@ -69,20 +89,17 @@ static void *selective_repeat_sender(void *arg)
 
 static void send_pkt(int sockfd, pkt_t *pkt, const struct sockaddr *servaddr)
 {
-	if (sendto(sockfd, pkt, sizeof(pkt_t), 0, (struct sockaddr *)servaddr,
-			       sizeof(struct sockaddr)) < 0) {
-		perror("Errore in sendto()");
-		exit(EXIT_FAILURE);
+	if (!sym_lost_pkt()){	
+		if (sendto(sockfd, pkt, sizeof(pkt_t), 0, (struct sockaddr *)servaddr,
+				       sizeof(struct sockaddr)) < 0) {
+			perror("Errore in sendto()");
+			exit(EXIT_FAILURE);
+		}
+		printf("pkt %ld inviato\n", pkt->header.n_seq);
+	} else {
+		printf("pkt %ld perduto\n", pkt->header.n_seq);
 	}
-	
-	printf("pkt %ld inviato\n", pkt->header.n_seq);
 	//alarm(TIMEOUT);
-}
-
-void alarm_handler(int sig)
-{
-	(void)sig;
-	// send_pkt();
 }
 
 static void *selective_repeat_receiver(void *arg)
@@ -122,7 +139,7 @@ static void *selective_repeat_receiver(void *arg)
 		cbn.acked = 1;
 		seqnum = pkt->header.n_seq;
 
-		printf("ricevuti %d byte! n_seq = %ld\n", n, seqnum);
+		printf("ricevuto n_seq = %ld, Start = %d, End = %d\n", seqnum, cb->S, cb->E);
 
 		// invio ack
 		send_ack(sockfd, *servaddr, seqnum);
@@ -333,6 +350,8 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd)
 	cb->S = 0;
 	cb->base = 0;
 	cb->nextseqnum = 0;
+
+	srand(time(NULL)); // seed per simulare probabilita' di perdita pacchetti
 
 	if (pthread_mutex_init(&(cb->mtx), NULL) != 0){
 		perror("Errore in pthread_mutex_init()\n");

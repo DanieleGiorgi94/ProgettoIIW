@@ -5,6 +5,7 @@
 #define BUFFER_SIZE 2048
 #define WINDOW_SIZE 1024
 #define TIMEOUT = 10
+#define LOSS_PROB 10 
 
 struct SR_thread_data { // dati della selective repeat
 	int sockfd; // descrittore della socket
@@ -26,9 +27,15 @@ struct ackrec_thread_data {
 	pthread_t tid;
 };
 
+struct timer_thread_data {
+	struct circular_buffer *cb;
+	pthread_t tid;
+};
+
 struct buf_node {
 	pkt_t pkt;
 	char acked;
+	float timer;
 };
 
 struct circular_buffer {
