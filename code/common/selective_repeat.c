@@ -11,13 +11,13 @@ static void *receive_ack(void *);
 static void sorted_buf_insertion(struct circular_buffer *, struct buf_node *, u64);
 static void lock_buffer(struct circular_buffer *);
 static void unlock_buffer(struct circular_buffer *);
-void alarm_handler(int);
+static void *timeout_handler(void *);
+char sym_lost_pkt(void);
 
 char sym_lost_pkt(void)
 {
 	/* simula perdita pacchetti con probabilita' LOSS_PROB */
 	int i = rand() % 101; // genera numero da 1 a 100
-	printf("%d\n", i);
 	return i <= LOSS_PROB;
 }
 
@@ -36,29 +36,70 @@ static void unlock_buffer(struct circular_buffer *cb)
 		exit(EXIT_FAILURE);
 	}
 }
-/*
-void start_timer(u32 index)
+
+static void *timeout_handler(void *arg)
 {
-	// cb->cb_node[index].timer = time(NULL); 
+	struct timer_thread_data *ptd = arg;
+	struct circular_buffer *cb = ptd->cb;	
+	int sockfd = ptd->sockfd;
+	struct sockaddr *servaddr = ptd->servaddr;
+	u32 I; // indice temporaneo per ricerca nel buffer
+	clock_t tspan; 
+	pkt_t pkt;
+
+	for (;;){
+		lock_buffer(cb);
+
+		while (cb->S == cb->E){
+			/* buffer circolare vuoto */
+			unlock_buffer(cb);
+			usleep(1000000);
+			lock_buffer(cb);
+		}
+
+		/*cbn = cb->cb_node[cb->S];
+		if (cbn.acked == 0){
+			tspan = clock() - cbn.timer;
+			if (tspan >= TIMEOUT){
+				printf("tspan = %ld\n", tspan);
+				pkt = cbn.pkt;
+				send_pkt(sockfd, &pkt, servaddr);
+				cb->cb_node[cb->S].timer = clock();
+			}
+		}*/
+
+		if (cb->S > cb->N){
+			I = cb->N + BUFFER_SIZE;
+		} else {
+			I = cb->N;
+		}
+
+		for (u32 i = cb->S; i < I; i++){
+			if (cb->cb_node[i % BUFFER_SIZE].acked == 0){
+				tspan = clock() - cb->cb_node[i % BUFFER_SIZE].timer;
+				if (tspan >= TIMEOUT){
+					printf("tspan = %ld\n", tspan);
+					pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
+					send_pkt(sockfd, &pkt, servaddr);
+					cb->cb_node[i % BUFFER_SIZE].timer = clock();
+				}
+			}
+		}
+
+		unlock_buffer(cb);
+	}
+
+	return NULL;
 }
 
-void timeout_handler(float timer)
-{
-	if (time(NULL) - timer >= TIMEOUT){
-		// send_pkt();	
-	}
-}
-*/
 static void *selective_repeat_sender(void *arg)
 {
 	struct SR_thread_data *ptd = arg;
 	struct circular_buffer *cb = ptd->cb;
 	int sockfd = ptd->sockfd;
     	const struct sockaddr *servaddr = ptd->servaddr;
-	u32 n;	
 
 	lock_buffer(cb);
-	n = cb->S; // inizializzazione indice del paccheto da inviare
 	unlock_buffer(cb);
 
 	for(;;){
@@ -73,12 +114,13 @@ static void *selective_repeat_sender(void *arg)
 
 		if (cb->nextseqnum < cb->base + WINDOW_SIZE){
 			/* finestra non piena */
-			if (n != cb->E){
-				/* n non supera cb->E */
-				pkt_t pkt = cb->cb_node[n].pkt;
-				send_pkt(sockfd, &pkt, servaddr);
-				n = (n + 1) % BUFFER_SIZE;
-				cb->nextseqnum = cb->cb_node[n].pkt.header.n_seq;
+			if (cb->N != cb->E){
+				/* cb->N non supera cb->E */
+				pkt_t pkt = cb->cb_node[cb->N].pkt;
+				send_pkt(sockfd, &pkt, servaddr); // invio pacchetto 
+				cb->cb_node[cb->N].timer = clock(); // start timer
+				cb->N = (cb->N + 1) % BUFFER_SIZE;
+				cb->nextseqnum = cb->cb_node[cb->N].pkt.header.n_seq;
 			}
 		}
 		unlock_buffer(cb);
@@ -99,7 +141,6 @@ static void send_pkt(int sockfd, pkt_t *pkt, const struct sockaddr *servaddr)
 	} else {
 		printf("pkt %ld perduto\n", pkt->header.n_seq);
 	}
-	//alarm(TIMEOUT);
 }
 
 static void *selective_repeat_receiver(void *arg)
@@ -139,7 +180,7 @@ static void *selective_repeat_receiver(void *arg)
 		cbn.acked = 1;
 		seqnum = pkt->header.n_seq;
 
-		printf("ricevuto n_seq = %ld, Start = %d, End = %d\n", seqnum, cb->S, cb->E);
+		printf("ricevuto n_seq = %ld, cb->S = %d\n", seqnum, cb->S);
 
 		// invio ack
 		send_ack(sockfd, *servaddr, seqnum);
@@ -168,14 +209,11 @@ static void *receive_ack(void *arg)
 	int n;
         u64 i;
 	ack_t *ack = (ack_t *)dynamic_allocation(sizeof(ack_t));
-	u64 seqnum, tmp_seqnum;
 	unsigned int slen = sizeof(struct sockaddr);
 	
 	int sockfd = ackrec->sockfd;
 	struct sockaddr *servaddr = ackrec->servaddr;
 	struct circular_buffer *cb = ackrec->cb;
-	//cb = (struct circular_buffer *)dynamic_allocation(sizeof(struct circular_buffer));
-
 	u32 I; // indice temporaneo per ricerca nel buffer
 	
 	while(1) {
@@ -184,33 +222,30 @@ static void *receive_ack(void *arg)
 			perror("Errore in recvfrom: ricezione dell'ack");
 			exit(EXIT_FAILURE);
 		} 
-	        if (n > 0) {
-			lock_buffer(cb);			
+	        
+		lock_buffer(cb);			
 
-			if (cb->S < cb->E){
-				I = cb->E + BUFFER_SIZE;
-			} else {
-				I = cb->E;
-			}
-
-    			tmp_seqnum = cb->cb_node[cb->S].pkt.header.n_seq;
-			seqnum = ack->n_seq;
-			
-			//printf("ack %ld ricevuto\n", seqnum);
-
-			i = seqnum - tmp_seqnum;
-			if (cb->S + i < I){
-				cb->cb_node[(cb->S + i) % BUFFER_SIZE].acked = 1;
-			}
-
-			while (cb->cb_node[cb->S].acked == 1){
-				cb->S = (cb->S + 1) % BUFFER_SIZE;	
-			}
-			/* aggiorna base */
-    			cb->base = cb->cb_node[cb->S].pkt.header.n_seq;
-
-			unlock_buffer(cb);
+		if (cb->S > cb->E){
+			I = cb->E + BUFFER_SIZE;
+		} else {
+			I = cb->E;
 		}
+
+		i = ack->n_seq % BUFFER_SIZE;
+		if (cb->S <= i && i < I){
+			cb->cb_node[i].acked = 1;
+			printf("per pkt %ld, ack %ld ricevuto\n", 
+				cb->cb_node[i].pkt.header.n_seq, ack->n_seq);
+		}
+
+		while (cb->cb_node[cb->S].acked == 1){
+			cb->S = (cb->S + 1) % BUFFER_SIZE;	
+		}
+		/* aggiorna base */
+    		cb->base = cb->cb_node[cb->S].pkt.header.n_seq;
+		printf("cb->S = %d\n", cb->S);
+
+		unlock_buffer(cb);
     	}
 
 	return NULL;	
@@ -218,12 +253,13 @@ static void *receive_ack(void *arg)
 
 static void sorted_buf_insertion(struct circular_buffer *cb, struct buf_node *cbn, u64 seqnum)
 {
+	// TODO: capire cosa non va
 	u64 tmp_seqnum;
 	pkt_t current_pkt;
 	u64 i;
 
 	u32 I; // indice temporaneo per ricerca nel buffer
-	if (cb->S < cb->E){
+	if (cb->S > cb->E){
 		I = cb->E + BUFFER_SIZE;
 	} else {
 		I = cb->E;
@@ -238,12 +274,14 @@ static void sorted_buf_insertion(struct circular_buffer *cb, struct buf_node *cb
 		i = seqnum - tmp_seqnum;
 
 		if (i < BUFFER_SIZE){
-			cb->cb_node[(cb->S + i) % BUFFER_SIZE] = *cbn;	
+			cb->cb_node[(cb->S + i) % BUFFER_SIZE] = *cbn;
+			printf("inserisco pacchetto %ld in posizione %d\n",
+					cbn->pkt.header.n_seq,(cb->S + i) % BUFFER_SIZE); 	
 			if (i >= I - cb->S){
 				cb->E = (cb->S + i + 1) % BUFFER_SIZE;
 			}
 		}
-	}	
+	}
 }
 
 
@@ -314,9 +352,13 @@ static void *merge_file(void *arg)
     	u64 written_byte;
 
 	for(;;){
+		lock_buffer(cb);
+
 		while (cb->S == cb->E){
 			/* buffer circolare vuoto */
+			unlock_buffer(cb);
 			usleep(100000);
+			lock_buffer(cb);
 		}
 
 		acked = cb->cb_node[cb->S].acked;
@@ -324,7 +366,7 @@ static void *merge_file(void *arg)
 			pkt_t pkt = cb->cb_node[cb->S].pkt;
 			cb->cb_node[cb->S].acked = 0;
 
-		//	printf("Reading pkt %ld from cb\n", pkt.header.n_seq);
+			printf("Reading pkt %ld from cb\n", pkt.header.n_seq);
 
 			written_byte = write_block(fd, pkt.payload, MAX_PAYLOAD_SIZE);
 
@@ -333,6 +375,8 @@ static void *merge_file(void *arg)
 
 			cb->S = (cb->S + 1) % BUFFER_SIZE;
 		}
+
+		unlock_buffer(cb);
 	}
 
 }
@@ -342,12 +386,14 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd)
 	struct SR_thread_data SR_td; // thread che segmenta il file in pacchetti
 	struct sender_thread_data sender_td; // thread che invia i pacchetti
 	struct ackrec_thread_data ackrec; // thread che riceve gli ack
+	struct timer_thread_data tmr_td; // thread che gestisce il timeout
 
 	struct circular_buffer *cb;
 	cb = (struct circular_buffer *)
         dynamic_allocation(sizeof(struct circular_buffer));
 	cb->E = 0;
 	cb->S = 0;
+	cb->N = 0;
 	cb->base = 0;
 	cb->nextseqnum = 0;
 
@@ -362,22 +408,30 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd)
 	SR_td.cb = cb;
 	sender_td.cb = cb;
 	ackrec.cb = cb;
+	tmr_td.cb = cb;
+
 	SR_td.sockfd = sockfd;
 	ackrec.sockfd = sockfd;
+	tmr_td.sockfd = sockfd;
+
 	SR_td.servaddr = servaddr;
 	ackrec.servaddr = servaddr;
+	tmr_td.servaddr = servaddr;
+
 	sender_td.fd = fd;
 
 	if ((pthread_create(&sender_td.tid, NULL, split_file, &sender_td) ||
 		pthread_create(&SR_td.tid, NULL, selective_repeat_sender, &SR_td) || 
-		pthread_create(&ackrec.tid, NULL, receive_ack, &ackrec)) != 0) {
+		pthread_create(&ackrec.tid, NULL, receive_ack, &ackrec) ||
+		pthread_create(&tmr_td.tid, NULL, timeout_handler, &tmr_td)) != 0) {
 		perror("Errore in pthread_create()");
 		exit(EXIT_FAILURE);
 	}
 
-	if (pthread_join(SR_td.tid, NULL) || 
-				pthread_join(sender_td.tid, NULL) ||
-				pthread_join(ackrec.tid, NULL) != 0){
+	if ((pthread_join(SR_td.tid, NULL) || 
+			pthread_join(sender_td.tid, NULL) ||
+			pthread_join(ackrec.tid, NULL) ||
+			pthread_join(tmr_td.tid, NULL)) != 0){
 		perror("Errore in pthread_join()");
 		exit(EXIT_FAILURE);
 	}
@@ -397,6 +451,7 @@ void receive_file(int sockfd, struct sockaddr *servaddr, int fd)
         dynamic_allocation(sizeof(struct circular_buffer));
 	cb->S = 0;
 	cb->E = 0;
+	cb->N = 0;
 	cb->base = 0;
 	cb->nextseqnum = 0;
 	
