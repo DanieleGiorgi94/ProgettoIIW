@@ -8,7 +8,7 @@ static void *merge_file(void *);
 static void send_pkt(int, pkt_t *,const struct sockaddr *);
 static void send_ack(int, struct sockaddr, u64);
 static void *receive_ack(void *);
-static void sorted_buf_insertion(struct circular_buffer *, struct buf_node *, u64);
+static void sorted_buf_insertion(struct circular_buffer *, struct buf_node, u64);
 static void lock_buffer(struct circular_buffer *);
 static void unlock_buffer(struct circular_buffer *);
 static void *timeout_handler(void *);
@@ -57,17 +57,6 @@ static void *timeout_handler(void *arg)
 			lock_buffer(cb);
 		}
 
-		/*cbn = cb->cb_node[cb->S];
-		if (cbn.acked == 0){
-			tspan = clock() - cbn.timer;
-			if (tspan >= TIMEOUT){
-				printf("tspan = %ld\n", tspan);
-				pkt = cbn.pkt;
-				send_pkt(sockfd, &pkt, servaddr);
-				cb->cb_node[cb->S].timer = clock();
-			}
-		}*/
-
 		if (cb->S > cb->N){
 			I = cb->N + BUFFER_SIZE;
 		} else {
@@ -78,7 +67,6 @@ static void *timeout_handler(void *arg)
 			if (cb->cb_node[i % BUFFER_SIZE].acked == 0){
 				tspan = clock() - cb->cb_node[i % BUFFER_SIZE].timer;
 				if (tspan >= TIMEOUT){
-					printf("tspan = %ld\n", tspan);
 					pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
 					send_pkt(sockfd, &pkt, servaddr);
 					cb->cb_node[i % BUFFER_SIZE].timer = clock();
@@ -99,9 +87,6 @@ static void *selective_repeat_sender(void *arg)
 	int sockfd = ptd->sockfd;
     	const struct sockaddr *servaddr = ptd->servaddr;
 
-	lock_buffer(cb);
-	unlock_buffer(cb);
-
 	for(;;){
 		lock_buffer(cb);
 
@@ -112,7 +97,7 @@ static void *selective_repeat_sender(void *arg)
 			lock_buffer(cb);
 		}
 
-		if (cb->nextseqnum < cb->base + WINDOW_SIZE){
+		if (cb->N < cb->S + WINDOW_SIZE){
 			/* finestra non piena */
 			if (cb->N != cb->E){
 				/* cb->N non supera cb->E */
@@ -120,7 +105,6 @@ static void *selective_repeat_sender(void *arg)
 				send_pkt(sockfd, &pkt, servaddr); // invio pacchetto 
 				cb->cb_node[cb->N].timer = clock(); // start timer
 				cb->N = (cb->N + 1) % BUFFER_SIZE;
-				cb->nextseqnum = cb->cb_node[cb->N].pkt.header.n_seq;
 			}
 		}
 		unlock_buffer(cb);
@@ -152,18 +136,21 @@ static void *selective_repeat_receiver(void *arg)
 	unsigned int slen = sizeof(struct sockaddr);
 	u64 seqnum;
 	u32 nE;
-	int n;
 	pkt_t *pkt;
 
 	for(;;){
 		pkt = (pkt_t *)dynamic_allocation(sizeof(pkt_t));
 		// ricezione pacchetto
-		n = recvfrom(sockfd, (void *)pkt, sizeof(pkt_t), 0,
-			       	(struct sockaddr *)servaddr, &slen);
-		if (n < 0) {
+		if (recvfrom(sockfd, (void *)pkt, sizeof(pkt_t), 0,
+			       	(struct sockaddr *)servaddr, &slen) < 0){
 			perror("Errore in recvfrom()");
 			exit(EXIT_FAILURE);
 		}
+
+		struct buf_node cbn;
+		cbn.pkt = *pkt;
+		cbn.acked = 1;
+		seqnum = pkt->header.n_seq;
 
 		lock_buffer(cb);
 
@@ -175,24 +162,20 @@ static void *selective_repeat_receiver(void *arg)
 			lock_buffer(cb);
 		}	
 
-		struct buf_node cbn;
-		cbn.pkt = *pkt;
-		cbn.acked = 1;
-		seqnum = pkt->header.n_seq;
-
 		printf("ricevuto n_seq = %ld, cb->S = %d\n", seqnum, cb->S);
+
+		// inserimento ordinato del pacchetto ricevuto
+		sorted_buf_insertion(cb, cbn, seqnum);
+
+		unlock_buffer(cb);
 
 		// invio ack
 		send_ack(sockfd, *servaddr, seqnum);
-
-		// ordinamento dei pacchetti ricevuti
-		sorted_buf_insertion(cb, &cbn, seqnum);
-
-		unlock_buffer(cb);
 	}	
 }
 
-static void send_ack(int sockfd, struct sockaddr servaddr, u64 seqnum){
+static void send_ack(int sockfd, struct sockaddr servaddr, u64 seqnum)
+{
 	ack_t *ack = (ack_t *)dynamic_allocation(sizeof(ack_t));
 	ack->n_seq = seqnum;
 
@@ -217,8 +200,7 @@ static void *receive_ack(void *arg)
 	u32 I; // indice temporaneo per ricerca nel buffer
 	
 	while(1) {
-		n = recvfrom(sockfd, (void *)ack, sizeof(ack_t), 0, servaddr, &slen);
-		if (n < 0) {
+		if (recvfrom(sockfd, (void *)ack, sizeof(ack_t), 0, servaddr, &slen) < 0) {
 			perror("Errore in recvfrom: ricezione dell'ack");
 			exit(EXIT_FAILURE);
 		} 
@@ -242,7 +224,6 @@ static void *receive_ack(void *arg)
 			cb->S = (cb->S + 1) % BUFFER_SIZE;	
 		}
 		/* aggiorna base */
-    		cb->base = cb->cb_node[cb->S].pkt.header.n_seq;
 		printf("cb->S = %d\n", cb->S);
 
 		unlock_buffer(cb);
@@ -251,62 +232,28 @@ static void *receive_ack(void *arg)
 	return NULL;	
 }
 
-static void sorted_buf_insertion(struct circular_buffer *cb, struct buf_node *cbn, u64 seqnum)
+static void sorted_buf_insertion(struct circular_buffer *cb, struct buf_node cbn, u64 seqnum)
 {
-	// TODO: capire cosa non va
-	u64 tmp_seqnum;
-	pkt_t current_pkt;
-	u64 i;
+	u64 i = seqnum % BUFFER_SIZE;
+	if (cb->cb_node[i].acked == 1) return;
 
-	u32 I; // indice temporaneo per ricerca nel buffer
-	if (cb->S > cb->E){
-		I = cb->E + BUFFER_SIZE;
+	cb->cb_node[i] = cbn;
+	printf("inserisco pacchetto %ld in posizione %d\n",
+			cbn.pkt.header.n_seq, i); 	
+
+	if (cb->S <= cb->E){
+		if (i > cb->E) cb->E = (i + 1) % BUFFER_SIZE;
 	} else {
-		I = cb->E;
-	}
-
-	if (cb->S == cb->E){ // buffer circolare vuoto
-		cb->cb_node[cb->E] = *cbn;
-		cb->E = (cb->E + 1) % BUFFER_SIZE;
-	} else {
-		current_pkt = cb->cb_node[cb->S].pkt;
-		tmp_seqnum = current_pkt.header.n_seq;
-		i = seqnum - tmp_seqnum;
-
-		if (i < BUFFER_SIZE){
-			cb->cb_node[(cb->S + i) % BUFFER_SIZE] = *cbn;
-			printf("inserisco pacchetto %ld in posizione %d\n",
-					cbn->pkt.header.n_seq,(cb->S + i) % BUFFER_SIZE); 	
-			if (i >= I - cb->S){
-				cb->E = (cb->S + i + 1) % BUFFER_SIZE;
-			}
-		}
+		if (i > cb->E && i < cb->S ) cb->E = (i + 1) % BUFFER_SIZE;
 	}
 }
 
 
-static pkt_t create_pkt(int fd, u64 nseq)
-{
-    char buff[MAX_PAYLOAD_SIZE];
 
-    u64 read_byte = read_block(fd,buff, MAX_PAYLOAD_SIZE); //Legge dal file e crea pacchetti di dim MAX_PAYLOAD_SIZE
 
-    if (read_byte < MAX_PAYLOAD_SIZE){
-        pthread_exit(NULL);
-    }
 
-    header_t header;
-    header.n_seq = nseq;
-    header.length = (u32) read_byte;
-    header.rwnd = 0;
-    header.type = 0;
 
-    pkt_t pkt;
-    pkt.header = header;
-    strncpy(pkt.payload, buff, read_byte);
-
-    return pkt;
-}
+/* ********** SENDER ********** */
 
 static void *split_file(void *arg)
 {
@@ -343,44 +290,6 @@ static void *split_file(void *arg)
 	return NULL;
 }
 
-static void *merge_file(void *arg)
-{
-	struct sender_thread_data *ptd = arg;
-	struct circular_buffer *cb = ptd->cb;
-	int fd = ptd->fd;
-  	char acked;
-    	u64 written_byte;
-
-	for(;;){
-		lock_buffer(cb);
-
-		while (cb->S == cb->E){
-			/* buffer circolare vuoto */
-			unlock_buffer(cb);
-			usleep(100000);
-			lock_buffer(cb);
-		}
-
-		acked = cb->cb_node[cb->S].acked;
-		if (acked == 1){
-			pkt_t pkt = cb->cb_node[cb->S].pkt;
-			cb->cb_node[cb->S].acked = 0;
-
-			printf("Reading pkt %ld from cb\n", pkt.header.n_seq);
-
-			written_byte = write_block(fd, pkt.payload, MAX_PAYLOAD_SIZE);
-
-			if (written_byte < MAX_PAYLOAD_SIZE)
-			    pthread_exit(NULL);
-
-			cb->S = (cb->S + 1) % BUFFER_SIZE;
-		}
-
-		unlock_buffer(cb);
-	}
-
-}
-
 void send_file(int sockfd, struct sockaddr *servaddr, int fd)
 {
 	struct SR_thread_data SR_td; // thread che segmenta il file in pacchetti
@@ -394,8 +303,6 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd)
 	cb->E = 0;
 	cb->S = 0;
 	cb->N = 0;
-	cb->base = 0;
-	cb->nextseqnum = 0;
 
 	srand(time(NULL)); // seed per simulare probabilita' di perdita pacchetti
 
@@ -440,6 +347,47 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd)
 
 }
 
+/* ********** RECEIVER ********** */
+
+static void *merge_file(void *arg)
+{
+	struct sender_thread_data *ptd = arg;
+	struct circular_buffer *cb = ptd->cb;
+	int fd = ptd->fd;
+  	char acked;
+    	u64 written_byte;
+
+	for(;;){
+		lock_buffer(cb);
+
+		while (cb->S == cb->E){
+			/* buffer circolare vuoto */
+			unlock_buffer(cb);
+			usleep(100000);
+			lock_buffer(cb);
+		}
+
+		acked = cb->cb_node[cb->S].acked;
+		while (acked == 1){
+			pkt_t pkt = cb->cb_node[cb->S].pkt;
+			cb->cb_node[cb->S].acked = 0;
+
+			printf("Reading pkt %ld from cb\n", pkt.header.n_seq);
+
+			written_byte = write_block(fd, pkt.payload, MAX_PAYLOAD_SIZE);
+
+			if (written_byte < MAX_PAYLOAD_SIZE)
+			    pthread_exit(NULL);
+
+			cb->S = (cb->S + 1) % BUFFER_SIZE;
+			acked = cb->cb_node[cb->S].acked;
+		}
+
+		unlock_buffer(cb);
+	}
+
+}
+
 void receive_file(int sockfd, struct sockaddr *servaddr, int fd)
 {
 	struct SR_thread_data SR_td; // thread che riceve i pacchetti
@@ -452,8 +400,6 @@ void receive_file(int sockfd, struct sockaddr *servaddr, int fd)
 	cb->S = 0;
 	cb->E = 0;
 	cb->N = 0;
-	cb->base = 0;
-	cb->nextseqnum = 0;
 	
 	if (pthread_mutex_init(&(cb->mtx), NULL) != 0){
 		perror("Errore in pthread_mutex_init()\n");
@@ -467,9 +413,9 @@ void receive_file(int sockfd, struct sockaddr *servaddr, int fd)
 	SR_td.servaddr = servaddr;
 	receiver_td.fd = fd;
 
-	if ((pthread_create(&receiver_td.tid, NULL, merge_file, &receiver_td) != 0) ||
-	    (pthread_create(&SR_td.tid, NULL, selective_repeat_receiver, &SR_td) 
-	     != 0)){
+	if ((pthread_create(&receiver_td.tid, NULL, merge_file, &receiver_td) ||
+	    pthread_create(&SR_td.tid, NULL, selective_repeat_receiver, &SR_td)) 
+	     != 0){
 		perror("Errore in pthread_create()");
 		exit(EXIT_FAILURE);
 	}

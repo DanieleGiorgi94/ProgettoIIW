@@ -41,11 +41,9 @@ struct buf_node {
 };
 
 struct circular_buffer {
-	u32 E;
-	u32 S;
-	u32 N; // indice del pacchetto da inviare
-	u64 base; // n_seq del piu' vecchio pacchetto non acked
-	u64 nextseqnum; // n_seq del pacchetto da inviare
+	u32 E; // indice della fine del buffer (end)
+	u32 S; // indice dell'inizio del buffer (start/base)
+	u32 N; // indice del pacchetto da inviare (nextseqnum)
 	pthread_mutex_t mtx;
 	struct buf_node cb_node[BUFFER_SIZE];
 };
