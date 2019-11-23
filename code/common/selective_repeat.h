@@ -2,9 +2,9 @@
 #error You must not include this sub-header file directly
 #endif
 
-#define BUFFER_SIZE 2048
+#define BUFFER_SIZE 300
 #define WINDOW_SIZE 1024
-#define TIMEOUT     3000000
+#define TIMEOUT     1000000
 #define LOSS_PROB   10 
 
 struct SR_thread_data { // dati della selective repeat
@@ -36,8 +36,9 @@ struct timer_thread_data {
 
 struct buf_node {
 	pkt_t pkt;
-	char acked;
-	clock_t timer;
+	char acked; // ack ricevuto (invio) o nodo occupato (ricezione)
+	u32 n_round; // numero di giri di lettura del buffer (ricezione)
+	clock_t timer; // timer (invio)
 };
 
 struct circular_buffer {
