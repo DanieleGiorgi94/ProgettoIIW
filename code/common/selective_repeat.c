@@ -42,7 +42,6 @@ static void unlock_buffer(struct circular_buffer *cb)
 static void *receive_ack(void *arg)
 {
 	struct ackrec_thread_data *ackrec = arg;
-	int n;
         u64 i;
 	ack_t *ack = (ack_t *)dynamic_allocation(sizeof(ack_t));
 	unsigned int slen = sizeof(struct sockaddr);
@@ -72,16 +71,13 @@ static void *receive_ack(void *arg)
 
 		if (cb->S <= i && i < I && seqnum == ack->n_seq){
 			cb->cb_node[i].acked = 1;
-			printf("per pkt %ld, ack %ld ricevuto\n", 
-				seqnum, ack->n_seq);
+			printf("ack %ld ricevuto\n", ack->n_seq);
 		}
 
 		while (cb->cb_node[cb->S].acked == 1){
 			if (cb->S == cb->E) break;
 			cb->S = (cb->S + 1) % BUFFER_SIZE;	
 		}
-
-		printf("cb->S = %d\n", cb->S);
 
 		unlock_buffer(cb);
     	}
@@ -234,6 +230,7 @@ static void *timeout_handler(void *arg)
 				if (tspan >= TIMEOUT){
 					pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
 					send_pkt(sockfd, &pkt, servaddr);
+					printf("inviato per timeout\n");
 					cb->cb_node[i % BUFFER_SIZE].timer = clock();
 				}
 			}
@@ -308,21 +305,20 @@ static char sorted_buf_insertion(struct circular_buffer *cb, struct buf_node cbn
 	/* restituisce 1 se il pacchetto viene accettato, 0 se scartato */
 	u64 i = seqnum % BUFFER_SIZE;
 
-	/* scarto il pacchetto se il nodo e' occupato oppure se non e' ancora 
-	 * arrivato il pacchetto precedente che deve occupare quella posizione */
-	if ((cb->cb_node[i].acked == 1) || (cb->cb_node[i].n_round != cbn.n_round)) {
+	/* scarto il pacchetto se il nodo e' occupato */
+	if ((cb->cb_node[i].acked == 1) || 
+			(i == (cb->S + BUFFER_SIZE - 1) % BUFFER_SIZE)) {
 		printf("Scarto pacchetto %ld\n", seqnum);
 		return 0;
 	} 
 
 	cb->cb_node[i] = cbn;
-	printf("inserisco pacchetto %ld in posizione %ld, n_round = %d\n",
-			cbn.pkt.header.n_seq, i, cb->cb_node[i].n_round); 	
+	printf("inserisco pacchetto %ld\n", cbn.pkt.header.n_seq); 	
 
 	if (cb->S <= cb->E){
 		if (i > cb->E) cb->E = (i + 1) % BUFFER_SIZE;
 	} else {
-		if (i > cb->E && i < cb->S ) cb->E = (i + 1) % BUFFER_SIZE;
+		if (i > cb->E && i < cb->S - 1) cb->E = (i + 1) % BUFFER_SIZE;
 	}
 
 	return 1;
@@ -364,7 +360,6 @@ static void *selective_repeat_receiver(void *arg)
 		cbn.pkt = *pkt;
 		cbn.acked = 1;
 		seqnum = pkt->header.n_seq;
-		cbn.n_round = (seqnum - (seqnum % BUFFER_SIZE)) / BUFFER_SIZE;
 
 		lock_buffer(cb);
 
@@ -376,7 +371,7 @@ static void *selective_repeat_receiver(void *arg)
 			lock_buffer(cb);
 		}	
 
-		printf("ricevuto n_seq = %ld, cb->S = %d\n", seqnum, cb->S);
+		printf("ricevuto pkt %ld\n", seqnum);
 
 		// inserimento ordinato del pacchetto ricevuto
 		if (sorted_buf_insertion(cb, cbn, seqnum)){
@@ -397,7 +392,6 @@ static void *merge_file(void *arg)
 	int fd = ptd->fd;
   	char acked;
     	u64 written_byte;
-	u32 n_round, rounds = 0;
 
 	for(;;){
 		lock_buffer(cb);
@@ -410,11 +404,9 @@ static void *merge_file(void *arg)
 		}
 
 		acked = cb->cb_node[cb->S].acked;
-		n_round = cb->cb_node[cb->S].n_round;
-		while (acked == 1 && n_round == rounds){
+		while (acked == 1){
 			pkt_t pkt = cb->cb_node[cb->S].pkt;
 			cb->cb_node[cb->S].acked = 0;
-			cb->cb_node[cb->S].n_round += 1;
 
 			printf("Reading pkt %ld from cb\n", pkt.header.n_seq);
 
@@ -423,10 +415,8 @@ static void *merge_file(void *arg)
 			if (written_byte < MAX_PAYLOAD_SIZE)
 			    pthread_exit(NULL);
 
-			if ((cb->S + 1) == BUFFER_SIZE) rounds += 1;
 			cb->S = (cb->S + 1) % BUFFER_SIZE;
 			acked = cb->cb_node[cb->S].acked;
-			n_round = cb->cb_node[cb->S].n_round;
 		}
 
 		unlock_buffer(cb);

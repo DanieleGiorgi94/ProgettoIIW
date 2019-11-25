@@ -37,7 +37,6 @@ struct timer_thread_data {
 struct buf_node {
 	pkt_t pkt;
 	char acked; // ack ricevuto (invio) o nodo occupato (ricezione)
-	u32 n_round; // numero di giri di lettura del buffer (ricezione)
 	clock_t timer; // timer (invio)
 };
 
