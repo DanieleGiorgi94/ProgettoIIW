@@ -69,7 +69,7 @@ static void *receive_ack(void *arg)
 		i = ack->n_seq % BUFFER_SIZE;
 		seqnum = cb->cb_node[i].pkt.header.n_seq;
 
-		if (cb->S <= i && i < I && seqnum == ack->n_seq){
+		if (cb->S <= i && i < I){
 			cb->cb_node[i].acked = 1;
 			printf("ack %ld ricevuto\n", ack->n_seq);
 		}
@@ -89,7 +89,7 @@ char sym_lost_pkt(void)
 {
 	/* simula perdita pacchetti con probabilita' LOSS_PROB */
 	int i = rand() % 101; // genera numero da 1 a 100
-	return i <= LOSS_PROB;
+	return i <= LOSS_PROB - 200;
 }
 
 static void send_pkt(int sockfd, pkt_t *pkt, const struct sockaddr *servaddr)
@@ -123,7 +123,7 @@ static void *selective_repeat_sender(void *arg)
 			lock_buffer(cb);
 		}
 
-		if (cb->N < cb->S + WINDOW_SIZE){
+		if (cb->N + BUFFER_SIZE*(cb->S > cb->N) - cb->S <= WINDOW_SIZE){
 			/* finestra non piena */
 			if (cb->N != cb->E){
 				/* cb->N non supera cb->E */
@@ -306,11 +306,11 @@ static char sorted_buf_insertion(struct circular_buffer *cb, struct buf_node cbn
 	u64 i = seqnum % BUFFER_SIZE;
 
 	/* scarto il pacchetto se il nodo e' occupato */
-	if ((cb->cb_node[i].acked == 1) || 
+	/*if ((cb->cb_node[i].acked == 1) || 
 			(i == (cb->S + BUFFER_SIZE - 1) % BUFFER_SIZE)) {
 		printf("Scarto pacchetto %ld\n", seqnum);
 		return 0;
-	} 
+	} */
 
 	cb->cb_node[i] = cbn;
 	printf("inserisco pacchetto %ld\n", cbn.pkt.header.n_seq); 	
@@ -403,20 +403,18 @@ static void *merge_file(void *arg)
 			lock_buffer(cb);
 		}
 
-		acked = cb->cb_node[cb->S].acked;
-		while (acked == 1){
+		while (cb->cb_node[cb->S].acked == 1){
 			pkt_t pkt = cb->cb_node[cb->S].pkt;
 			cb->cb_node[cb->S].acked = 0;
 
 			printf("Reading pkt %ld from cb\n", pkt.header.n_seq);
-
 			written_byte = write_block(fd, pkt.payload, MAX_PAYLOAD_SIZE);
 
 			if (written_byte < MAX_PAYLOAD_SIZE)
+				perror("Error in write_block()\n");
 			    pthread_exit(NULL);
 
-			cb->S = (cb->S + 1) % BUFFER_SIZE;
-			acked = cb->cb_node[cb->S].acked;
+			cb->S = (cb->S + 1) % BUFFER_SIZE; 
 		}
 
 		unlock_buffer(cb);

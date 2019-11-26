@@ -4,7 +4,7 @@
 
 #define BUFFER_SIZE 300
 #define WINDOW_SIZE 1024
-#define TIMEOUT     1000000
+#define TIMEOUT     2000000
 #define LOSS_PROB   10 
 
 struct SR_thread_data { // dati della selective repeat
