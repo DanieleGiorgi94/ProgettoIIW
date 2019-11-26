@@ -97,8 +97,8 @@ int main(int argc, char **argv)
     int len = (int) strlen(message)-1;
 
     if (len < 3){
-	fprintf(stderr, "Please insert a valid command.\n");
-	goto RESET;
+        fprintf(stderr, "Please insert a valid command.\n");
+        goto RESET;
     }
 
 
@@ -118,14 +118,31 @@ int main(int argc, char **argv)
 
         printf("Received GET command...\n");
 
-        int fd = open_file(PATH, O_RDONLY);
 
-        send_file(sockfd, (struct sockaddr *) &servaddr, fd); //invia file al buffer circolare
+        if (token_vector[1] == NULL){
+            fprintf(stderr, "Usage: GET <filename.format>\n");
+            goto RESET;
+        } else {
+            if (check_file(token_vector[1], list_dir(PATH))) {
 
-        close_file(fd);
+                char filepath[100] = PATH;
 
-        goto RESET;
+                int fd = open_file(strncat(filepath, token_vector[1], strlen(token_vector[1])), O_RDONLY);
+                send_file(sockfd, (struct sockaddr *) &servaddr, fd); //invia file al buffer circolare
+
+                close_file(fd);
+
+                goto RESET;
+            }
+            else {
+                fprintf(stderr, "The requested file: %s was not found on the server.\n", token_vector[1]);
+                goto RESET;
+            }
+
+        }
     }
+
+
 
     if (strncmp(token_vector[0], "put", 4) == 0) {
 
@@ -147,7 +164,7 @@ int main(int argc, char **argv)
         strncmp(token_vector[0], "exit", 5) && strncmp(token_vector[0], "put", 4) != 0) {
 
         fprintf(stderr, "Please insert a valid command.\n");
-        //goto RESET;
+//goto RESET;
     }
 
 
