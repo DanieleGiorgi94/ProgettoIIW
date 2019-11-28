@@ -95,7 +95,7 @@ char sym_lost_pkt(void)
 static void send_pkt(int sockfd, pkt_t *pkt, const struct sockaddr *servaddr)
 {
 	if (!sym_lost_pkt()){	
-		if (sendto(sockfd, pkt, sizeof(pkt_t), 0, (struct sockaddr *)servaddr,
+		if ((sockfd, pkt, sizeof(pkt_t), 0, (struct sockaddr *)servaddr,
 				       sizeof(struct sockaddr)) < 0) {
 			perror("Errore in sendto()");
 			exit(EXIT_FAILURE);
@@ -242,7 +242,7 @@ static void *timeout_handler(void *arg)
 	return NULL;
 }
 
-void send_file(int sockfd, struct sockaddr *servaddr, int fd)
+void send_file(int sockfd, struct sockaddr *servaddr, int fd, char *filename)
 {
 	struct SR_thread_data SR_td; // thread che segmenta il file in pacchetti
 	struct sender_thread_data sender_td; // thread che invia i pacchetti
