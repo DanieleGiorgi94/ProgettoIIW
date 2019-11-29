@@ -412,8 +412,10 @@ static void *merge_file(void *arg)
 
 			written_byte = write_block(fd, pkt.payload, MAX_PAYLOAD_SIZE);
 
-			if (written_byte < MAX_PAYLOAD_SIZE)
-			    pthread_exit(NULL);
+			if (written_byte < MAX_PAYLOAD_SIZE){
+			    perror("Error in write_block()\n");
+                pthread_exit(NULL);
+			}
 
 			cb->S = (cb->S + 1) % BUFFER_SIZE;
 			acked = cb->cb_node[cb->S].acked;

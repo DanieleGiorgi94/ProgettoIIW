@@ -35,7 +35,7 @@ char * obtain_path(char*filepath, char* token, char* cmd) {
     memset(absolute_path, '\0', strlen(absolute_path));
     int lenpath = strlen(filepath);
 
-    if (strncmp(cmd, "get", 4) == 0 //TODO: modificare con cartelle Download e Upload per Client e Server
+    if (strncmp(cmd, "get", 4) == 0) //TODO: modificare con cartelle Download e Upload per Client e Server
         strcat(filepath, "/FILES/");
     else if (strncmp(cmd, "put", 4) == 0)
         strcat(filepath, "/FILES/");
@@ -170,7 +170,7 @@ int main(int argc, char **argv)
                  * al client spetta l'apertura di un nuovo file nella sua cartella di download con lo stesso nome
                  * richiesto (se non esiste una copia) e salverà via via li il file scaricato.
                  * */
-                int fd = open_file(strncat(filepath, O_RDONLY);
+                int fd = open_file(filepath, O_RDONLY);
                 //Ora qui in realtà è il contrario, dovrebbe essere il server ad aprire il file ovviamente!
                 send_file(sockfd, (struct sockaddr *) &servaddr, fd, token_vector[1]); //invia file al buffer circolare
 
