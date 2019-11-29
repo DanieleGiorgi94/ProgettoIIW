@@ -158,12 +158,12 @@ int main(int argc, char **argv)
             fprintf(stderr, "Usage: GET <filename.format>\n");
             goto RESET;
         } else {
-            if (check_file(token_vector[1], list_dir(PATH))) {
 
-                char *filepath = dynamic_allocation(sizeof(char *)*BUFLEN);
 
+            char *filepath = dynamic_allocation(sizeof(char *)*BUFLEN);
+            filepath = obtain_path(filepath, "", token_vector[0]); // ottengo path_assoluto directory
+            if (check_file(token_vector[1], list_dir(filepath))) {
                 filepath = obtain_path(filepath, token_vector[1], token_vector[0]); // ottengo path_assoluto file
-
                 /* TODO: Il client manda un pacchetto al server con dentro il nome del file (token_vector[1]) che deve
                  * trovare nella sua cartella di upload, mentre download sarà per la put dei file. Se il file esiste,
                  * (il cui path sarà preso con obtain_path) allora aprirà quel file e inizierà la trasmissione. Mentre

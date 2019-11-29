@@ -95,7 +95,7 @@ char sym_lost_pkt(void)
 static void send_pkt(int sockfd, pkt_t *pkt, const struct sockaddr *servaddr)
 {
 	if (!sym_lost_pkt()){	
-		if ((sockfd, pkt, sizeof(pkt_t), 0, (struct sockaddr *)servaddr,
+		if (sendto(sockfd, pkt, sizeof(pkt_t), 0, (struct sockaddr *)servaddr,
 				       sizeof(struct sockaddr)) < 0) {
 			perror("Errore in sendto()");
 			exit(EXIT_FAILURE);
@@ -145,6 +145,8 @@ static pkt_t create_pkt(int fd, u64 nseq)
 
     	u64 read_byte = read_block(fd,buff, MAX_PAYLOAD_SIZE); 
     	//Legge dal file e crea pacchetti di dim MAX_PAYLOAD_SIZE
+
+        printf("*******%u\n", lseek(fd, 0, SEEK_CUR));
 
     	if (read_byte < MAX_PAYLOAD_SIZE){
         	pthread_exit(NULL);
