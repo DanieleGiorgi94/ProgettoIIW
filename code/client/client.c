@@ -35,7 +35,7 @@ char * obtain_path(char*filepath, char* token, char* cmd) {
     memset(absolute_path, '\0', strlen(absolute_path));
     int lenpath = strlen(filepath);
 
-    if (strncmp(cmd, "get", 4) == 0 //TODO: modificare con cartelle Download e Upload per Client e Server
+    if (strncmp(cmd, "get", 4) == 0) //TODO: modificare con cartelle Download e Upload per Client e Server
         strcat(filepath, "/FILES/");
     else if (strncmp(cmd, "put", 4) == 0)
         strcat(filepath, "/FILES/");
@@ -158,19 +158,19 @@ int main(int argc, char **argv)
             fprintf(stderr, "Usage: GET <filename.format>\n");
             goto RESET;
         } else {
-            if (check_file(token_vector[1], list_dir(PATH))) {
 
-                char *filepath = dynamic_allocation(sizeof(char *)*BUFLEN);
 
+            char *filepath = dynamic_allocation(sizeof(char *)*BUFLEN);
+            filepath = obtain_path(filepath, "", token_vector[0]); // ottengo path_assoluto directory
+            if (check_file(token_vector[1], list_dir(filepath))) {
                 filepath = obtain_path(filepath, token_vector[1], token_vector[0]); // ottengo path_assoluto file
-
                 /* TODO: Il client manda un pacchetto al server con dentro il nome del file (token_vector[1]) che deve
                  * trovare nella sua cartella di upload, mentre download sarà per la put dei file. Se il file esiste,
                  * (il cui path sarà preso con obtain_path) allora aprirà quel file e inizierà la trasmissione. Mentre
                  * al client spetta l'apertura di un nuovo file nella sua cartella di download con lo stesso nome
                  * richiesto (se non esiste una copia) e salverà via via li il file scaricato.
                  * */
-                int fd = open_file(strncat(filepath, O_RDONLY);
+                int fd = open_file(filepath, O_RDONLY);
                 //Ora qui in realtà è il contrario, dovrebbe essere il server ad aprire il file ovviamente!
                 send_file(sockfd, (struct sockaddr *) &servaddr, fd, token_vector[1]); //invia file al buffer circolare
 

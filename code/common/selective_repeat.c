@@ -50,7 +50,6 @@ static void *receive_ack(void *arg)
 	struct sockaddr *servaddr = ackrec->servaddr;
 	struct circular_buffer *cb = ackrec->cb;
 	u32 I; // indice temporaneo per ricerca nel buffer
-	u64 seqnum;
 	
 	while(1) {
 		if (recvfrom(sockfd, (void *)ack, sizeof(ack_t), 0, servaddr, &slen) < 0) {
@@ -67,7 +66,6 @@ static void *receive_ack(void *arg)
 		}
 
 		i = ack->n_seq % BUFFER_SIZE;
-		seqnum = cb->cb_node[i].pkt.header.n_seq;
 
 		if (cb->S <= i && i < I){
 			cb->cb_node[i].acked = 1;
@@ -89,13 +87,13 @@ char sym_lost_pkt(void)
 {
 	/* simula perdita pacchetti con probabilita' LOSS_PROB */
 	int i = rand() % 101; // genera numero da 1 a 100
-	return i <= LOSS_PROB - 200;
+	return i <= LOSS_PROB;
 }
 
 static void send_pkt(int sockfd, pkt_t *pkt, const struct sockaddr *servaddr)
 {
 	if (!sym_lost_pkt()){	
-		if ((sockfd, pkt, sizeof(pkt_t), 0, (struct sockaddr *)servaddr,
+		if (sendto(sockfd, pkt, sizeof(pkt_t), 0, (struct sockaddr *)servaddr,
 				       sizeof(struct sockaddr)) < 0) {
 			perror("Errore in sendto()");
 			exit(EXIT_FAILURE);
@@ -145,6 +143,8 @@ static pkt_t create_pkt(int fd, u64 nseq)
 
     	u64 read_byte = read_block(fd,buff, MAX_PAYLOAD_SIZE); 
     	//Legge dal file e crea pacchetti di dim MAX_PAYLOAD_SIZE
+
+        printf("*******%lu\n", lseek(fd, 0, SEEK_CUR));
 
     	if (read_byte < MAX_PAYLOAD_SIZE){
         	pthread_exit(NULL);
@@ -306,11 +306,11 @@ static char sorted_buf_insertion(struct circular_buffer *cb, struct buf_node cbn
 	u64 i = seqnum % BUFFER_SIZE;
 
 	/* scarto il pacchetto se il nodo e' occupato */
-	/*if ((cb->cb_node[i].acked == 1) || 
+	if ((cb->cb_node[i].acked == 1) || 
 			(i == (cb->S + BUFFER_SIZE - 1) % BUFFER_SIZE)) {
 		printf("Scarto pacchetto %ld\n", seqnum);
-		return 0;
-	} */
+		return 0; // comunque l'ack viene mandato
+	} 
 
 	cb->cb_node[i] = cbn;
 	printf("inserisco pacchetto %ld\n", cbn.pkt.header.n_seq); 	
@@ -390,7 +390,6 @@ static void *merge_file(void *arg)
 	struct sender_thread_data *ptd = arg;
 	struct circular_buffer *cb = ptd->cb;
 	int fd = ptd->fd;
-  	char acked;
     	u64 written_byte;
 
 	for(;;){
@@ -410,9 +409,10 @@ static void *merge_file(void *arg)
 			printf("Reading pkt %ld from cb\n", pkt.header.n_seq);
 			written_byte = write_block(fd, pkt.payload, MAX_PAYLOAD_SIZE);
 
-			if (written_byte < MAX_PAYLOAD_SIZE)
-				perror("Error in write_block()\n");
-			    pthread_exit(NULL);
+			if (written_byte < MAX_PAYLOAD_SIZE){
+			   	perror("Error in write_block()\n");
+               			pthread_exit(NULL);
+			}
 
 			cb->S = (cb->S + 1) % BUFFER_SIZE; 
 		}
