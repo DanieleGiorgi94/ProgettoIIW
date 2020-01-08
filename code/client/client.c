@@ -138,6 +138,7 @@ int main(int argc, char **argv)
 
     token_vector = tokenize_string(message, " ");
 
+
     /*if ( (int) sendto(sockfd, message, sizeof(message), 0, (struct sockaddr *) &servaddr , slen)  == -1){
         perror("sendto");
         exit(EXIT_FAILURE);
@@ -163,7 +164,7 @@ int main(int argc, char **argv)
             filepath = obtain_path(filepath, token_vector[1], token_vector[0]); // ottengo path_assoluto file
 
 
-            if (check_file(token_vector[1], list_dir(filepath)) {
+            if (check_file(token_vector[1], list_dir(PATH))) {
 
 
                 /* TODO: Il client manda un pacchetto al server con dentro il nome del file (token_vector[1]) che deve
