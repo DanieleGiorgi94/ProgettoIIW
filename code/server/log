@@ -1,7 +1,7 @@
 ricevuto pkt 0
 inserisco pacchetto 0
-ricevuto pkt 2
-inserisco pacchetto 2
+ricevuto pkt 1
+inserisco pacchetto 1
 ricevuto pkt 3
 inserisco pacchetto 3
 ricevuto pkt 4
@@ -18,46 +18,48 @@ ricevuto pkt 9
 inserisco pacchetto 9
 ricevuto pkt 10
 inserisco pacchetto 10
-ricevuto pkt 11
-inserisco pacchetto 11
 ricevuto pkt 12
 inserisco pacchetto 12
 ricevuto pkt 13
 inserisco pacchetto 13
 ricevuto pkt 14
 inserisco pacchetto 14
-ricevuto pkt 15
-inserisco pacchetto 15
+ricevuto pkt 16
+inserisco pacchetto 16
 ricevuto pkt 17
 inserisco pacchetto 17
+ricevuto pkt 18
+inserisco pacchetto 18
+ricevuto pkt 19
+inserisco pacchetto 19
 ricevuto pkt 20
 inserisco pacchetto 20
-ricevuto pkt 21
-inserisco pacchetto 21
 ricevuto pkt 22
 inserisco pacchetto 22
 ricevuto pkt 23
 inserisco pacchetto 23
 ricevuto pkt 24
 inserisco pacchetto 24
-ricevuto pkt 25
-inserisco pacchetto 25
 ricevuto pkt 26
 inserisco pacchetto 26
 ricevuto pkt 27
 inserisco pacchetto 27
 ricevuto pkt 28
 inserisco pacchetto 28
-ricevuto pkt 29
-inserisco pacchetto 29
 ricevuto pkt 30
 inserisco pacchetto 30
 ricevuto pkt 31
 inserisco pacchetto 31
 ricevuto pkt 32
 inserisco pacchetto 32
+ricevuto pkt 33
+inserisco pacchetto 33
+ricevuto pkt 34
+inserisco pacchetto 34
 ricevuto pkt 35
 inserisco pacchetto 35
+ricevuto pkt 36
+inserisco pacchetto 36
 ricevuto pkt 37
 inserisco pacchetto 37
 ricevuto pkt 38
@@ -68,47 +70,54 @@ ricevuto pkt 40
 inserisco pacchetto 40
 ricevuto pkt 41
 inserisco pacchetto 41
+ricevuto pkt 42
+inserisco pacchetto 42
+ricevuto pkt 43
+inserisco pacchetto 43
 ricevuto pkt 44
 inserisco pacchetto 44
 ricevuto pkt 45
 inserisco pacchetto 45
 ricevuto pkt 46
 inserisco pacchetto 46
-ricevuto pkt 47
-inserisco pacchetto 47
 ricevuto pkt 48
 inserisco pacchetto 48
 ricevuto pkt 49
 inserisco pacchetto 49
 ricevuto pkt 50
 inserisco pacchetto 50
+ricevuto pkt 51
+inserisco pacchetto 51
 ricevuto pkt 52
 inserisco pacchetto 52
-Reading pkt 0 from cb
 ricevuto pkt 53
 inserisco pacchetto 53
 ricevuto pkt 54
 inserisco pacchetto 54
 ricevuto pkt 55
 inserisco pacchetto 55
+ricevuto pkt 56
+inserisco pacchetto 56
 ricevuto pkt 57
 inserisco pacchetto 57
-ricevuto pkt 58
-inserisco pacchetto 58
+Reading pkt 0 from cb
+Reading pkt 1 from cb
+ricevuto pkt 60
+inserisco pacchetto 60
 ricevuto pkt 61
 inserisco pacchetto 61
 ricevuto pkt 62
 inserisco pacchetto 62
-ricevuto pkt 63
-inserisco pacchetto 63
 ricevuto pkt 64
 inserisco pacchetto 64
 ricevuto pkt 65
 inserisco pacchetto 65
+ricevuto pkt 66
+inserisco pacchetto 66
+ricevuto pkt 67
+inserisco pacchetto 67
 ricevuto pkt 68
 inserisco pacchetto 68
-ricevuto pkt 69
-inserisco pacchetto 69
 ricevuto pkt 70
 inserisco pacchetto 70
 ricevuto pkt 71
@@ -123,54 +132,6 @@ ricevuto pkt 75
 inserisco pacchetto 75
 ricevuto pkt 76
 inserisco pacchetto 76
-ricevuto pkt 1
-inserisco pacchetto 1
-Reading pkt 1 from cb
-Reading pkt 2 from cb
-Reading pkt 3 from cb
-Reading pkt 4 from cb
-Reading pkt 5 from cb
-Reading pkt 6 from cb
-Reading pkt 7 from cb
-Reading pkt 8 from cb
-Reading pkt 9 from cb
-Reading pkt 10 from cb
-Reading pkt 11 from cb
-Reading pkt 12 from cb
-Reading pkt 13 from cb
-Reading pkt 14 from cb
-Reading pkt 15 from cb
-ricevuto pkt 16
-inserisco pacchetto 16
-Reading pkt 16 from cb
-Reading pkt 17 from cb
-ricevuto pkt 18
-inserisco pacchetto 18
-Reading pkt 18 from cb
-ricevuto pkt 19
-inserisco pacchetto 19
-Reading pkt 19 from cb
-Reading pkt 20 from cb
-Reading pkt 21 from cb
-Reading pkt 22 from cb
-Reading pkt 23 from cb
-Reading pkt 24 from cb
-Reading pkt 25 from cb
-Reading pkt 26 from cb
-Reading pkt 27 from cb
-Reading pkt 28 from cb
-Reading pkt 29 from cb
-Reading pkt 30 from cb
-Reading pkt 31 from cb
-Reading pkt 32 from cb
-ricevuto pkt 34
-inserisco pacchetto 34
-ricevuto pkt 36
-inserisco pacchetto 36
-ricevuto pkt 42
-inserisco pacchetto 42
-ricevuto pkt 43
-inserisco pacchetto 43
 ricevuto pkt 77
 inserisco pacchetto 77
 ricevuto pkt 78
@@ -179,6 +140,8 @@ ricevuto pkt 79
 inserisco pacchetto 79
 ricevuto pkt 80
 inserisco pacchetto 80
+ricevuto pkt 81
+inserisco pacchetto 81
 ricevuto pkt 82
 inserisco pacchetto 82
 ricevuto pkt 83
@@ -187,6 +150,8 @@ ricevuto pkt 84
 inserisco pacchetto 84
 ricevuto pkt 85
 inserisco pacchetto 85
+ricevuto pkt 86
+inserisco pacchetto 86
 ricevuto pkt 87
 inserisco pacchetto 87
 ricevuto pkt 88
@@ -213,18 +178,45 @@ ricevuto pkt 98
 inserisco pacchetto 98
 ricevuto pkt 99
 inserisco pacchetto 99
-ricevuto pkt 51
-inserisco pacchetto 51
 ricevuto pkt 100
 inserisco pacchetto 100
+ricevuto pkt 101
+inserisco pacchetto 101
 ricevuto pkt 102
 inserisco pacchetto 102
 ricevuto pkt 103
 inserisco pacchetto 103
 ricevuto pkt 104
 inserisco pacchetto 104
+ricevuto pkt 2
+inserisco pacchetto 2
+Reading pkt 2 from cb
+Reading pkt 3 from cb
+Reading pkt 4 from cb
+Reading pkt 5 from cb
+Reading pkt 6 from cb
+Reading pkt 7 from cb
+Reading pkt 8 from cb
+Reading pkt 9 from cb
+Reading pkt 10 from cb
+ricevuto pkt 15
+inserisco pacchetto 15
+ricevuto pkt 25
+inserisco pacchetto 25
+ricevuto pkt 29
+inserisco pacchetto 29
+ricevuto pkt 47
+inserisco pacchetto 47
+ricevuto pkt 58
+inserisco pacchetto 58
+ricevuto pkt 59
+inserisco pacchetto 59
+ricevuto pkt 63
+inserisco pacchetto 63
 ricevuto pkt 105
 inserisco pacchetto 105
+ricevuto pkt 69
+inserisco pacchetto 69
 ricevuto pkt 106
 inserisco pacchetto 106
 ricevuto pkt 107
@@ -247,16 +239,8 @@ ricevuto pkt 115
 inserisco pacchetto 115
 ricevuto pkt 116
 inserisco pacchetto 116
-ricevuto pkt 117
-inserisco pacchetto 117
-ricevuto pkt 56
-inserisco pacchetto 56
 ricevuto pkt 118
 inserisco pacchetto 118
-ricevuto pkt 59
-inserisco pacchetto 59
-ricevuto pkt 60
-inserisco pacchetto 60
 ricevuto pkt 119
 inserisco pacchetto 119
 ricevuto pkt 120
@@ -281,8 +265,8 @@ ricevuto pkt 129
 inserisco pacchetto 129
 ricevuto pkt 130
 inserisco pacchetto 130
-ricevuto pkt 131
-inserisco pacchetto 131
+ricevuto pkt 132
+inserisco pacchetto 132
 ricevuto pkt 133
 inserisco pacchetto 133
 ricevuto pkt 134
@@ -303,8 +287,6 @@ ricevuto pkt 141
 inserisco pacchetto 141
 ricevuto pkt 142
 inserisco pacchetto 142
-ricevuto pkt 143
-inserisco pacchetto 143
 ricevuto pkt 144
 inserisco pacchetto 144
 ricevuto pkt 145
@@ -319,10 +301,6 @@ ricevuto pkt 150
 inserisco pacchetto 150
 ricevuto pkt 151
 inserisco pacchetto 151
-ricevuto pkt 152
-inserisco pacchetto 152
-ricevuto pkt 66
-inserisco pacchetto 66
 ricevuto pkt 153
 inserisco pacchetto 153
 ricevuto pkt 154
@@ -333,14 +311,14 @@ ricevuto pkt 156
 inserisco pacchetto 156
 ricevuto pkt 157
 inserisco pacchetto 157
+ricevuto pkt 158
+inserisco pacchetto 158
 ricevuto pkt 159
 inserisco pacchetto 159
 ricevuto pkt 160
 inserisco pacchetto 160
 ricevuto pkt 161
 inserisco pacchetto 161
-ricevuto pkt 162
-inserisco pacchetto 162
 ricevuto pkt 163
 inserisco pacchetto 163
 ricevuto pkt 164
@@ -365,8 +343,6 @@ ricevuto pkt 173
 inserisco pacchetto 173
 ricevuto pkt 174
 inserisco pacchetto 174
-ricevuto pkt 175
-inserisco pacchetto 175
 ricevuto pkt 176
 inserisco pacchetto 176
 ricevuto pkt 177
@@ -377,6 +353,10 @@ ricevuto pkt 179
 inserisco pacchetto 179
 ricevuto pkt 180
 inserisco pacchetto 180
+ricevuto pkt 181
+inserisco pacchetto 181
+ricevuto pkt 182
+inserisco pacchetto 182
 ricevuto pkt 183
 inserisco pacchetto 183
 ricevuto pkt 184
@@ -393,50 +373,32 @@ ricevuto pkt 189
 inserisco pacchetto 189
 ricevuto pkt 190
 inserisco pacchetto 190
-ricevuto pkt 191
-inserisco pacchetto 191
-ricevuto pkt 192
-inserisco pacchetto 192
-ricevuto pkt 193
-inserisco pacchetto 193
-ricevuto pkt 195
-inserisco pacchetto 195
-ricevuto pkt 196
-inserisco pacchetto 196
-ricevuto pkt 197
-inserisco pacchetto 197
-ricevuto pkt 198
-inserisco pacchetto 198
-ricevuto pkt 199
-inserisco pacchetto 199
-ricevuto pkt 200
-inserisco pacchetto 200
-ricevuto pkt 201
-inserisco pacchetto 201
-ricevuto pkt 202
-inserisco pacchetto 202
-ricevuto pkt 203
-inserisco pacchetto 203
-ricevuto pkt 205
-inserisco pacchetto 205
-ricevuto pkt 206
-inserisco pacchetto 206
-ricevuto pkt 207
-inserisco pacchetto 207
-ricevuto pkt 208
-inserisco pacchetto 208
-ricevuto pkt 209
-inserisco pacchetto 209
-ricevuto pkt 212
-inserisco pacchetto 212
-ricevuto pkt 213
-inserisco pacchetto 213
-ricevuto pkt 67
-inserisco pacchetto 67
-ricevuto pkt 215
-inserisco pacchetto 215
-ricevuto pkt 33
-inserisco pacchetto 33
+ricevuto pkt 11
+inserisco pacchetto 11
+Reading pkt 11 from cb
+Reading pkt 12 from cb
+Reading pkt 13 from cb
+Reading pkt 14 from cb
+Reading pkt 15 from cb
+Reading pkt 16 from cb
+Reading pkt 17 from cb
+Reading pkt 18 from cb
+Reading pkt 19 from cb
+Reading pkt 20 from cb
+ricevuto pkt 21
+inserisco pacchetto 21
+Reading pkt 21 from cb
+Reading pkt 22 from cb
+Reading pkt 23 from cb
+Reading pkt 24 from cb
+Reading pkt 25 from cb
+Reading pkt 26 from cb
+Reading pkt 27 from cb
+Reading pkt 28 from cb
+Reading pkt 29 from cb
+Reading pkt 30 from cb
+Reading pkt 31 from cb
+Reading pkt 32 from cb
 Reading pkt 33 from cb
 Reading pkt 34 from cb
 Reading pkt 35 from cb
@@ -485,247 +447,11 @@ Reading pkt 77 from cb
 Reading pkt 78 from cb
 Reading pkt 79 from cb
 Reading pkt 80 from cb
-ricevuto pkt 81
-inserisco pacchetto 81
 Reading pkt 81 from cb
 Reading pkt 82 from cb
 Reading pkt 83 from cb
 Reading pkt 84 from cb
 Reading pkt 85 from cb
-ricevuto pkt 216
-inserisco pacchetto 216
-ricevuto pkt 218
-inserisco pacchetto 218
-ricevuto pkt 101
-inserisco pacchetto 101
-ricevuto pkt 219
-inserisco pacchetto 219
-ricevuto pkt 220
-inserisco pacchetto 220
-ricevuto pkt 221
-inserisco pacchetto 221
-ricevuto pkt 222
-inserisco pacchetto 222
-ricevuto pkt 224
-inserisco pacchetto 224
-ricevuto pkt 225
-inserisco pacchetto 225
-ricevuto pkt 226
-inserisco pacchetto 226
-ricevuto pkt 227
-inserisco pacchetto 227
-ricevuto pkt 228
-inserisco pacchetto 228
-ricevuto pkt 229
-inserisco pacchetto 229
-ricevuto pkt 230
-inserisco pacchetto 230
-ricevuto pkt 231
-inserisco pacchetto 231
-ricevuto pkt 232
-inserisco pacchetto 232
-ricevuto pkt 234
-inserisco pacchetto 234
-ricevuto pkt 235
-inserisco pacchetto 235
-ricevuto pkt 148
-inserisco pacchetto 148
-ricevuto pkt 237
-inserisco pacchetto 237
-ricevuto pkt 158
-inserisco pacchetto 158
-ricevuto pkt 181
-inserisco pacchetto 181
-ricevuto pkt 182
-inserisco pacchetto 182
-ricevuto pkt 238
-inserisco pacchetto 238
-ricevuto pkt 239
-inserisco pacchetto 239
-ricevuto pkt 241
-inserisco pacchetto 241
-ricevuto pkt 242
-inserisco pacchetto 242
-ricevuto pkt 243
-inserisco pacchetto 243
-ricevuto pkt 244
-inserisco pacchetto 244
-ricevuto pkt 204
-inserisco pacchetto 204
-ricevuto pkt 210
-inserisco pacchetto 210
-ricevuto pkt 211
-inserisco pacchetto 211
-ricevuto pkt 245
-inserisco pacchetto 245
-ricevuto pkt 246
-inserisco pacchetto 246
-ricevuto pkt 248
-inserisco pacchetto 248
-ricevuto pkt 249
-inserisco pacchetto 249
-ricevuto pkt 250
-inserisco pacchetto 250
-ricevuto pkt 251
-inserisco pacchetto 251
-ricevuto pkt 252
-inserisco pacchetto 252
-ricevuto pkt 253
-inserisco pacchetto 253
-ricevuto pkt 254
-inserisco pacchetto 254
-ricevuto pkt 255
-inserisco pacchetto 255
-ricevuto pkt 256
-inserisco pacchetto 256
-ricevuto pkt 257
-inserisco pacchetto 257
-ricevuto pkt 258
-inserisco pacchetto 258
-ricevuto pkt 259
-inserisco pacchetto 259
-ricevuto pkt 260
-inserisco pacchetto 260
-ricevuto pkt 261
-inserisco pacchetto 261
-ricevuto pkt 262
-inserisco pacchetto 262
-ricevuto pkt 263
-inserisco pacchetto 263
-ricevuto pkt 264
-inserisco pacchetto 264
-ricevuto pkt 265
-inserisco pacchetto 265
-ricevuto pkt 266
-inserisco pacchetto 266
-ricevuto pkt 267
-inserisco pacchetto 267
-ricevuto pkt 268
-inserisco pacchetto 268
-ricevuto pkt 269
-inserisco pacchetto 269
-ricevuto pkt 217
-inserisco pacchetto 217
-ricevuto pkt 270
-inserisco pacchetto 270
-ricevuto pkt 271
-inserisco pacchetto 271
-ricevuto pkt 272
-inserisco pacchetto 272
-ricevuto pkt 273
-inserisco pacchetto 273
-ricevuto pkt 274
-inserisco pacchetto 274
-ricevuto pkt 275
-inserisco pacchetto 275
-ricevuto pkt 276
-inserisco pacchetto 276
-ricevuto pkt 279
-inserisco pacchetto 279
-ricevuto pkt 223
-inserisco pacchetto 223
-ricevuto pkt 280
-inserisco pacchetto 280
-ricevuto pkt 281
-inserisco pacchetto 281
-ricevuto pkt 282
-inserisco pacchetto 282
-ricevuto pkt 283
-inserisco pacchetto 283
-ricevuto pkt 284
-inserisco pacchetto 284
-ricevuto pkt 285
-inserisco pacchetto 285
-ricevuto pkt 286
-inserisco pacchetto 286
-ricevuto pkt 287
-inserisco pacchetto 287
-ricevuto pkt 132
-inserisco pacchetto 132
-ricevuto pkt 233
-inserisco pacchetto 233
-ricevuto pkt 236
-inserisco pacchetto 236
-ricevuto pkt 288
-inserisco pacchetto 288
-ricevuto pkt 289
-inserisco pacchetto 289
-ricevuto pkt 290
-inserisco pacchetto 290
-ricevuto pkt 292
-inserisco pacchetto 292
-ricevuto pkt 293
-inserisco pacchetto 293
-ricevuto pkt 294
-inserisco pacchetto 294
-ricevuto pkt 295
-inserisco pacchetto 295
-ricevuto pkt 297
-inserisco pacchetto 297
-ricevuto pkt 299
-inserisco pacchetto 299
-ricevuto pkt 300
-inserisco pacchetto 300
-ricevuto pkt 301
-inserisco pacchetto 301
-ricevuto pkt 240
-inserisco pacchetto 240
-ricevuto pkt 302
-inserisco pacchetto 302
-ricevuto pkt 304
-inserisco pacchetto 304
-ricevuto pkt 305
-inserisco pacchetto 305
-ricevuto pkt 306
-inserisco pacchetto 306
-ricevuto pkt 194
-inserisco pacchetto 194
-ricevuto pkt 307
-inserisco pacchetto 307
-ricevuto pkt 308
-inserisco pacchetto 308
-ricevuto pkt 309
-inserisco pacchetto 309
-ricevuto pkt 310
-inserisco pacchetto 310
-ricevuto pkt 311
-inserisco pacchetto 311
-ricevuto pkt 312
-inserisco pacchetto 312
-ricevuto pkt 313
-inserisco pacchetto 313
-ricevuto pkt 314
-inserisco pacchetto 314
-ricevuto pkt 315
-inserisco pacchetto 315
-ricevuto pkt 316
-inserisco pacchetto 316
-ricevuto pkt 317
-inserisco pacchetto 317
-ricevuto pkt 214
-inserisco pacchetto 214
-ricevuto pkt 247
-inserisco pacchetto 247
-ricevuto pkt 318
-inserisco pacchetto 318
-ricevuto pkt 319
-inserisco pacchetto 319
-ricevuto pkt 320
-inserisco pacchetto 320
-ricevuto pkt 321
-inserisco pacchetto 321
-ricevuto pkt 322
-inserisco pacchetto 322
-ricevuto pkt 323
-inserisco pacchetto 323
-ricevuto pkt 324
-inserisco pacchetto 324
-ricevuto pkt 325
-inserisco pacchetto 325
-ricevuto pkt 326
-inserisco pacchetto 326
-ricevuto pkt 86
-inserisco pacchetto 86
 Reading pkt 86 from cb
 Reading pkt 87 from cb
 Reading pkt 88 from cb
@@ -757,6 +483,28 @@ Reading pkt 113 from cb
 Reading pkt 114 from cb
 Reading pkt 115 from cb
 Reading pkt 116 from cb
+ricevuto pkt 191
+inserisco pacchetto 191
+ricevuto pkt 192
+inserisco pacchetto 192
+ricevuto pkt 194
+inserisco pacchetto 194
+ricevuto pkt 195
+inserisco pacchetto 195
+ricevuto pkt 196
+inserisco pacchetto 196
+ricevuto pkt 197
+inserisco pacchetto 197
+ricevuto pkt 198
+inserisco pacchetto 198
+ricevuto pkt 199
+inserisco pacchetto 199
+ricevuto pkt 200
+inserisco pacchetto 200
+ricevuto pkt 201
+inserisco pacchetto 201
+ricevuto pkt 117
+inserisco pacchetto 117
 Reading pkt 117 from cb
 Reading pkt 118 from cb
 Reading pkt 119 from cb
@@ -771,6 +519,8 @@ Reading pkt 127 from cb
 Reading pkt 128 from cb
 Reading pkt 129 from cb
 Reading pkt 130 from cb
+ricevuto pkt 131
+inserisco pacchetto 131
 Reading pkt 131 from cb
 Reading pkt 132 from cb
 Reading pkt 133 from cb
@@ -783,9 +533,624 @@ Reading pkt 139 from cb
 Reading pkt 140 from cb
 Reading pkt 141 from cb
 Reading pkt 142 from cb
+ricevuto pkt 143
+inserisco pacchetto 143
 Reading pkt 143 from cb
 Reading pkt 144 from cb
 Reading pkt 145 from cb
 Reading pkt 146 from cb
 Reading pkt 147 from cb
-R
+ricevuto pkt 202
+inserisco pacchetto 202
+ricevuto pkt 203
+inserisco pacchetto 203
+ricevuto pkt 205
+inserisco pacchetto 205
+ricevuto pkt 206
+inserisco pacchetto 206
+ricevuto pkt 207
+inserisco pacchetto 207
+ricevuto pkt 208
+inserisco pacchetto 208
+ricevuto pkt 209
+inserisco pacchetto 209
+ricevuto pkt 210
+inserisco pacchetto 210
+ricevuto pkt 211
+inserisco pacchetto 211
+ricevuto pkt 212
+inserisco pacchetto 212
+ricevuto pkt 213
+inserisco pacchetto 213
+ricevuto pkt 214
+inserisco pacchetto 214
+ricevuto pkt 216
+inserisco pacchetto 216
+ricevuto pkt 217
+inserisco pacchetto 217
+ricevuto pkt 218
+inserisco pacchetto 218
+ricevuto pkt 219
+inserisco pacchetto 219
+ricevuto pkt 220
+inserisco pacchetto 220
+ricevuto pkt 221
+inserisco pacchetto 221
+ricevuto pkt 222
+inserisco pacchetto 222
+ricevuto pkt 223
+inserisco pacchetto 223
+ricevuto pkt 152
+inserisco pacchetto 152
+ricevuto pkt 224
+inserisco pacchetto 224
+ricevuto pkt 225
+inserisco pacchetto 225
+ricevuto pkt 226
+inserisco pacchetto 226
+ricevuto pkt 227
+inserisco pacchetto 227
+ricevuto pkt 162
+inserisco pacchetto 162
+ricevuto pkt 229
+inserisco pacchetto 229
+ricevuto pkt 230
+inserisco pacchetto 230
+ricevuto pkt 231
+inserisco pacchetto 231
+ricevuto pkt 232
+inserisco pacchetto 232
+ricevuto pkt 233
+inserisco pacchetto 233
+ricevuto pkt 234
+inserisco pacchetto 234
+ricevuto pkt 235
+inserisco pacchetto 235
+ricevuto pkt 236
+inserisco pacchetto 236
+ricevuto pkt 237
+inserisco pacchetto 237
+ricevuto pkt 238
+inserisco pacchetto 238
+ricevuto pkt 240
+inserisco pacchetto 240
+ricevuto pkt 241
+inserisco pacchetto 241
+ricevuto pkt 242
+inserisco pacchetto 242
+ricevuto pkt 244
+inserisco pacchetto 244
+ricevuto pkt 246
+inserisco pacchetto 246
+ricevuto pkt 175
+inserisco pacchetto 175
+ricevuto pkt 247
+inserisco pacchetto 247
+ricevuto pkt 248
+inserisco pacchetto 248
+ricevuto pkt 249
+inserisco pacchetto 249
+ricevuto pkt 250
+inserisco pacchetto 250
+ricevuto pkt 251
+inserisco pacchetto 251
+ricevuto pkt 252
+inserisco pacchetto 252
+ricevuto pkt 253
+inserisco pacchetto 253
+ricevuto pkt 254
+inserisco pacchetto 254
+ricevuto pkt 255
+inserisco pacchetto 255
+ricevuto pkt 256
+inserisco pacchetto 256
+ricevuto pkt 257
+inserisco pacchetto 257
+ricevuto pkt 258
+inserisco pacchetto 258
+ricevuto pkt 259
+inserisco pacchetto 259
+ricevuto pkt 260
+inserisco pacchetto 260
+ricevuto pkt 261
+inserisco pacchetto 261
+ricevuto pkt 262
+inserisco pacchetto 262
+ricevuto pkt 265
+inserisco pacchetto 265
+ricevuto pkt 266
+inserisco pacchetto 266
+ricevuto pkt 267
+inserisco pacchetto 267
+ricevuto pkt 268
+inserisco pacchetto 268
+ricevuto pkt 269
+inserisco pacchetto 269
+ricevuto pkt 270
+inserisco pacchetto 270
+ricevuto pkt 271
+inserisco pacchetto 271
+ricevuto pkt 272
+inserisco pacchetto 272
+ricevuto pkt 273
+inserisco pacchetto 273
+ricevuto pkt 274
+inserisco pacchetto 274
+ricevuto pkt 275
+inserisco pacchetto 275
+ricevuto pkt 276
+inserisco pacchetto 276
+ricevuto pkt 277
+inserisco pacchetto 277
+ricevuto pkt 193
+inserisco pacchetto 193
+ricevuto pkt 148
+inserisco pacchetto 148
+Reading pkt 148 from cb
+Reading pkt 149 from cb
+Reading pkt 150 from cb
+Reading pkt 151 from cb
+Reading pkt 152 from cb
+Reading pkt 153 from cb
+Reading pkt 154 from cb
+Reading pkt 155 from cb
+Reading pkt 156 from cb
+Reading pkt 157 from cb
+Reading pkt 158 from cb
+Reading pkt 159 from cb
+Reading pkt 160 from cb
+Reading pkt 161 from cb
+Reading pkt 162 from cb
+Reading pkt 163 from cb
+Reading pkt 164 from cb
+Reading pkt 165 from cb
+Reading pkt 166 from cb
+Reading pkt 167 from cb
+Reading pkt 168 from cb
+Reading pkt 169 from cb
+Reading pkt 170 from cb
+Reading pkt 171 from cb
+Reading pkt 172 from cb
+Reading pkt 173 from cb
+Reading pkt 174 from cb
+Reading pkt 175 from cb
+Reading pkt 176 from cb
+Reading pkt 177 from cb
+Reading pkt 178 from cb
+Reading pkt 179 from cb
+Reading pkt 180 from cb
+Reading pkt 181 from cb
+Reading pkt 182 from cb
+Reading pkt 183 from cb
+Reading pkt 184 from cb
+Reading pkt 185 from cb
+Reading pkt 186 from cb
+Reading pkt 187 from cb
+Reading pkt 188 from cb
+Reading pkt 189 from cb
+Reading pkt 190 from cb
+Reading pkt 191 from cb
+Reading pkt 192 from cb
+Reading pkt 193 from cb
+Reading pkt 194 from cb
+Reading pkt 195 from cb
+Reading pkt 196 from cb
+Reading pkt 197 from cb
+Reading pkt 198 from cb
+Reading pkt 199 from cb
+Reading pkt 200 from cb
+Reading pkt 201 from cb
+Reading pkt 202 from cb
+Reading pkt 203 from cb
+ricevuto pkt 215
+inserisco pacchetto 215
+ricevuto pkt 278
+inserisco pacchetto 278
+ricevuto pkt 279
+inserisco pacchetto 279
+ricevuto pkt 281
+inserisco pacchetto 281
+ricevuto pkt 282
+inserisco pacchetto 282
+ricevuto pkt 228
+inserisco pacchetto 228
+ricevuto pkt 284
+inserisco pacchetto 284
+ricevuto pkt 285
+inserisco pacchetto 285
+ricevuto pkt 287
+inserisco pacchetto 287
+ricevuto pkt 288
+inserisco pacchetto 288
+ricevuto pkt 290
+inserisco pacchetto 290
+ricevuto pkt 291
+inserisco pacchetto 291
+ricevuto pkt 292
+inserisco pacchetto 292
+ricevuto pkt 294
+inserisco pacchetto 294
+ricevuto pkt 239
+inserisco pacchetto 239
+ricevuto pkt 295
+inserisco pacchetto 295
+ricevuto pkt 296
+inserisco pacchetto 296
+ricevuto pkt 297
+inserisco pacchetto 297
+ricevuto pkt 299
+inserisco pacchetto 299
+ricevuto pkt 300
+inserisco pacchetto 300
+ricevuto pkt 243
+inserisco pacchetto 243
+ricevuto pkt 245
+inserisco pacchetto 245
+ricevuto pkt 301
+inserisco pacchetto 301
+ricevuto pkt 302
+inserisco pacchetto 302
+ricevuto pkt 263
+inserisco pacchetto 263
+ricevuto pkt 264
+inserisco pacchetto 264
+ricevuto pkt 303
+inserisco pacchetto 303
+ricevuto pkt 305
+inserisco pacchetto 305
+ricevuto pkt 306
+inserisco pacchetto 306
+ricevuto pkt 307
+inserisco pacchetto 307
+ricevuto pkt 309
+inserisco pacchetto 309
+ricevuto pkt 310
+inserisco pacchetto 310
+ricevuto pkt 311
+inserisco pacchetto 311
+ricevuto pkt 312
+inserisco pacchetto 312
+ricevuto pkt 313
+inserisco pacchetto 313
+ricevuto pkt 314
+inserisco pacchetto 314
+ricevuto pkt 315
+inserisco pacchetto 315
+ricevuto pkt 204
+inserisco pacchetto 204
+Reading pkt 204 from cb
+Reading pkt 205 from cb
+Reading pkt 206 from cb
+Reading pkt 207 from cb
+Reading pkt 208 from cb
+Reading pkt 209 from cb
+Reading pkt 210 from cb
+Reading pkt 211 from cb
+Reading pkt 212 from cb
+Reading pkt 213 from cb
+Reading pkt 214 from cb
+Reading pkt 215 from cb
+Reading pkt 216 from cb
+Reading pkt 217 from cb
+Reading pkt 218 from cb
+Reading pkt 219 from cb
+Reading pkt 220 from cb
+Reading pkt 221 from cb
+Reading pkt 222 from cb
+Reading pkt 223 from cb
+Reading pkt 224 from cb
+Reading pkt 225 from cb
+Reading pkt 226 from cb
+Reading pkt 227 from cb
+Reading pkt 228 from cb
+Reading pkt 229 from cb
+Reading pkt 230 from cb
+Reading pkt 231 from cb
+Reading pkt 232 from cb
+Reading pkt 233 from cb
+Reading pkt 234 from cb
+Reading pkt 235 from cb
+Reading pkt 236 from cb
+Reading pkt 237 from cb
+Reading pkt 238 from cb
+Reading pkt 239 from cb
+Reading pkt 240 from cb
+Reading pkt 241 from cb
+Reading pkt 242 from cb
+Reading pkt 243 from cb
+Reading pkt 244 from cb
+Reading pkt 245 from cb
+Reading pkt 246 from cb
+Reading pkt 247 from cb
+Reading pkt 248 from cb
+Reading pkt 249 from cb
+Reading pkt 250 from cb
+Reading pkt 251 from cb
+Reading pkt 252 from cb
+Reading pkt 253 from cb
+Reading pkt 254 from cb
+Reading pkt 255 from cb
+Reading pkt 256 from cb
+Reading pkt 257 from cb
+Reading pkt 258 from cb
+Reading pkt 259 from cb
+Reading pkt 260 from cb
+Reading pkt 261 from cb
+Reading pkt 262 from cb
+Reading pkt 263 from cb
+Reading pkt 264 from cb
+Reading pkt 265 from cb
+Reading pkt 266 from cb
+Reading pkt 267 from cb
+Reading pkt 268 from cb
+Reading pkt 269 from cb
+Reading pkt 270 from cb
+Reading pkt 271 from cb
+Reading pkt 272 from cb
+Reading pkt 273 from cb
+Reading pkt 274 from cb
+Reading pkt 275 from cb
+Reading pkt 276 from cb
+Reading pkt 277 from cb
+Reading pkt 278 from cb
+Reading pkt 279 from cb
+ricevuto pkt 316
+inserisco pacchetto 316
+ricevuto pkt 280
+inserisco pacchetto 280
+Reading pkt 280 from cb
+Reading pkt 281 from cb
+Reading pkt 282 from cb
+ricevuto pkt 286
+inserisco pacchetto 286
+ricevuto pkt 317
+inserisco pacchetto 317
+ricevuto pkt 318
+inserisco pacchetto 318
+ricevuto pkt 319
+inserisco pacchetto 319
+ricevuto pkt 289
+inserisco pacchetto 289
+ricevuto pkt 293
+inserisco pacchetto 293
+ricevuto pkt 298
+inserisco pacchetto 298
+ricevuto pkt 320
+inserisco pacchetto 320
+ricevuto pkt 301
+Scarto pacchetto 301
+ricevuto pkt 303
+Scarto pacchetto 303
+ricevuto pkt 304
+inserisco pacchetto 304
+ricevuto pkt 305
+Scarto pacchetto 305
+ricevuto pkt 306
+Scarto pacchetto 306
+ricevuto pkt 307
+Scarto pacchetto 307
+ricevuto pkt 308
+inserisco pacchetto 308
+ricevuto pkt 309
+Scarto pacchetto 309
+ricevuto pkt 310
+Scarto pacchetto 310
+ricevuto pkt 321
+inserisco pacchetto 321
+ricevuto pkt 322
+inserisco pacchetto 322
+ricevuto pkt 323
+inserisco pacchetto 323
+ricevuto pkt 312
+Scarto pacchetto 312
+ricevuto pkt 314
+Scarto pacchetto 314
+ricevuto pkt 315
+Scarto pacchetto 315
+ricevuto pkt 316
+Scarto pacchetto 316
+ricevuto pkt 283
+inserisco pacchetto 283
+Reading pkt 283 from cb
+Reading pkt 284 from cb
+Reading pkt 285 from cb
+Reading pkt 286 from cb
+Reading pkt 287 from cb
+Reading pkt 288 from cb
+Reading pkt 289 from cb
+Reading pkt 290 from cb
+Reading pkt 291 from cb
+Reading pkt 292 from cb
+Reading pkt 293 from cb
+Reading pkt 294 from cb
+Reading pkt 295 from cb
+Reading pkt 296 from cb
+Reading pkt 297 from cb
+Reading pkt 298 from cb
+Reading pkt 299 from cb
+Reading pkt 300 from cb
+Reading pkt 301 from cb
+Reading pkt 302 from cb
+Reading pkt 303 from cb
+Reading pkt 304 from cb
+Reading pkt 305 from cb
+Reading pkt 306 from cb
+Reading pkt 307 from cb
+Reading pkt 308 from cb
+Reading pkt 309 from cb
+Reading pkt 310 from cb
+Reading pkt 311 from cb
+Reading pkt 312 from cb
+Reading pkt 313 from cb
+Reading pkt 314 from cb
+Reading pkt 315 from cb
+Reading pkt 316 from cb
+Reading pkt 317 from cb
+Reading pkt 318 from cb
+Reading pkt 319 from cb
+Reading pkt 320 from cb
+Reading pkt 321 from cb
+Reading pkt 322 from cb
+Reading pkt 323 from cb
+ricevuto pkt 327
+inserisco pacchetto 327
+ricevuto pkt 317
+inserisco pacchetto 317
+ricevuto pkt 318
+inserisco pacchetto 318
+ricevuto pkt 319
+inserisco pacchetto 319
+ricevuto pkt 328
+inserisco pacchetto 328
+ricevuto pkt 320
+inserisco pacchetto 320
+ricevuto pkt 330
+inserisco pacchetto 330
+ricevuto pkt 332
+inserisco pacchetto 332
+ricevuto pkt 333
+inserisco pacchetto 333
+ricevuto pkt 334
+inserisco pacchetto 334
+ricevuto pkt 335
+inserisco pacchetto 335
+ricevuto pkt 336
+inserisco pacchetto 336
+ricevuto pkt 337
+inserisco pacchetto 337
+ricevuto pkt 338
+inserisco pacchetto 338
+ricevuto pkt 341
+inserisco pacchetto 341
+ricevuto pkt 342
+inserisco pacchetto 342
+ricevuto pkt 301
+inserisco pacchetto 301
+ricevuto pkt 343
+inserisco pacchetto 343
+ricevuto pkt 344
+inserisco pacchetto 344
+ricevuto pkt 345
+inserisco pacchetto 345
+ricevuto pkt 346
+inserisco pacchetto 346
+ricevuto pkt 347
+inserisco pacchetto 347
+ricevuto pkt 348
+inserisco pacchetto 348
+ricevuto pkt 349
+inserisco pacchetto 349
+ricevuto pkt 350
+inserisco pacchetto 350
+ricevuto pkt 351
+inserisco pacchetto 351
+ricevuto pkt 302
+inserisco pacchetto 302
+ricevuto pkt 352
+inserisco pacchetto 352
+ricevuto pkt 354
+inserisco pacchetto 354
+ricevuto pkt 303
+inserisco pacchetto 303
+ricevuto pkt 304
+inserisco pacchetto 304
+ricevuto pkt 306
+inserisco pacchetto 306
+ricevuto pkt 307
+inserisco pacchetto 307
+ricevuto pkt 355
+inserisco pacchetto 355
+ricevuto pkt 356
+inserisco pacchetto 356
+ricevuto pkt 357
+inserisco pacchetto 357
+ricevuto pkt 358
+inserisco pacchetto 358
+ricevuto pkt 359
+inserisco pacchetto 359
+ricevuto pkt 360
+inserisco pacchetto 360
+ricevuto pkt 308
+inserisco pacchetto 308
+ricevuto pkt 309
+inserisco pacchetto 309
+ricevuto pkt 311
+inserisco pacchetto 311
+ricevuto pkt 361
+inserisco pacchetto 361
+ricevuto pkt 362
+inserisco pacchetto 362
+ricevuto pkt 363
+inserisco pacchetto 363
+ricevuto pkt 364
+inserisco pacchetto 364
+ricevuto pkt 365
+inserisco pacchetto 365
+ricevuto pkt 366
+inserisco pacchetto 366
+ricevuto pkt 321
+inserisco pacchetto 321
+ricevuto pkt 322
+inserisco pacchetto 322
+ricevuto pkt 323
+Scarto pacchetto 323
+ricevuto pkt 312
+inserisco pacchetto 312
+ricevuto pkt 313
+inserisco pacchetto 313
+ricevuto pkt 314
+inserisco pacchetto 314
+ricevuto pkt 367
+inserisco pacchetto 367
+ricevuto pkt 316
+inserisco pacchetto 316
+ricevuto pkt 324
+inserisco pacchetto 324
+Reading pkt 324 from cb
+ricevuto pkt 325
+inserisco pacchetto 325
+Reading pkt 325 from cb
+ricevuto pkt 326
+inserisco pacchetto 326
+Reading pkt 326 from cb
+Reading pkt 327 from cb
+Reading pkt 328 from cb
+ricevuto pkt 329
+inserisco pacchetto 329
+Reading pkt 329 from cb
+Reading pkt 330 from cb
+ricevuto pkt 331
+inserisco pacchetto 331
+Reading pkt 331 from cb
+Reading pkt 332 from cb
+Reading pkt 333 from cb
+Reading pkt 334 from cb
+Reading pkt 335 from cb
+Reading pkt 336 from cb
+Reading pkt 337 from cb
+Reading pkt 338 from cb
+ricevuto pkt 339
+inserisco pacchetto 339
+Reading pkt 339 from cb
+ricevuto pkt 340
+inserisco pacchetto 340
+Reading pkt 340 from cb
+Reading pkt 341 from cb
+Reading pkt 342 from cb
+Reading pkt 343 from cb
+Reading pkt 344 from cb
+Reading pkt 345 from cb
+Reading pkt 346 from cb
+Reading pkt 347 from cb
+Reading pkt 348 from cb
+Reading pkt 349 from cb
+Reading pkt 350 from cb
+Reading pkt 351 from cb
+Reading pkt 352 from cb
+ricevuto pkt 353
+inserisco pacchetto 353
+Reading pkt 353 from cb
+Reading pkt 354 from cb
+Reading pkt 355 from cb
+Reading pkt 356 from cb
+Reading pkt 357

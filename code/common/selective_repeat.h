@@ -2,10 +2,10 @@
 #error You must not include this sub-header file directly
 #endif
 
-#define BUFFER_SIZE 300
-#define WINDOW_SIZE 1024
+#define BUFFER_SIZE 400
+#define WINDOW_SIZE 16
 #define TIMEOUT     2000000
-#define LOSS_PROB   10 
+#define LOSS_PROB   0
 
 struct SR_thread_data { // dati della selective repeat
 	int sockfd; // descrittore della socket

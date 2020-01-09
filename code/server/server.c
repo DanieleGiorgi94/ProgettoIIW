@@ -5,7 +5,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-
 int main(int argc, char **argv)
 {
     /* printf("Server!\n");
@@ -40,14 +39,13 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    int fd = open_file("/Users/Daniele-Giorgi/CLionProjects/ProgettoIIW/code/server/FILES/prova.txt", O_WRONLY | O_CREAT);//file in scrittura pkt ricevuti da cb
+    int fd = open_file("/home/frank/Desktop/magistrale/iiw/progetto/ProgettoIIW/code/server/FILES/prova.txt", O_WRONLY | O_CREAT);//file in scrittura pkt ricevuti da cb
 
-    receive_file(sockfd,(struct sockaddr *) &addr,fd);
+    receive_file(sockfd, (struct sockaddr *) &addr, fd);
 
     /*while(1){
         usleep_for(100000);
     }*/
 
     exit(EXIT_SUCCESS);
-
 }
