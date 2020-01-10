@@ -7,9 +7,14 @@
 #define TIMEOUT     2000000
 #define LOSS_PROB   0
 
+#define SEND_PORT   5193
+#define RCV_PORT    5194
+
 struct SR_thread_data { // dati della selective repeat
-	int sockfd; // descrittore della socket
-	struct sockaddr *servaddr; // indirizzo del server
+	int send_sockfd; // descrittore della socket
+	int rcv_sockfd; // descrittore della socket
+	struct sockaddr *send_servaddr; // indirizzo del server
+	struct sockaddr *rcv_servaddr; // indirizzo del server
 	struct circular_buffer *cb;
 	pthread_t tid;
 };
