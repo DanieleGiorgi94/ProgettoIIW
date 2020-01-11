@@ -36,7 +36,7 @@ int execute_command(char **, int);
     Secondo argomento: puntatore ai byte da scrivere
     Terzo argomento: quantità byte da scrivere
 */
-void write_block(int, void *, unsigned long);
+unsigned long write_block(int, void *, unsigned long);
 /* Simile al precedente; restituisce il numero di byte letti */
 unsigned long read_block(int, void *, unsigned long);
 /*
@@ -53,7 +53,7 @@ void close_file(int);
         'S' (set) -> inizio del file + offset
     Terzo argomento: offset
 */
-void move_offset(int, char, off_t);
+int move_offset(int, char, off_t);
 
 /*******LISTA COLLEGATA*******/
 /*

@@ -1,6 +1,6 @@
 #include "posix_library.h"
 
-void write_block(int fd, void *buf, unsigned long size)
+unsigned long write_block(int fd, void *buf, unsigned long size)
 {
     ssize_t v = 0;
     unsigned long r = 0;
@@ -12,6 +12,7 @@ void write_block(int fd, void *buf, unsigned long size)
         r += v;
         buf += v;
     }
+    return r;
 }
 unsigned long read_block(int fd, void *buf, unsigned long size)
 {
@@ -48,7 +49,7 @@ void close_file(int fd)
         }
     }
 }
-void move_offset(int fd, char c, off_t offset)
+int move_offset(int fd, char c, off_t offset)
 {
     int r;
     if (c == END) {
@@ -63,4 +64,6 @@ void move_offset(int fd, char c, off_t offset)
         r = lseek(fd, offset, SEEK_SET);
         print_error("lseek()", &r);
     }
+
+    return r;
 }

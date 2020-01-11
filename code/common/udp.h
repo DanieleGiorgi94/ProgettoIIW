@@ -4,6 +4,9 @@
 
 #define MAX_PAYLOAD_SIZE 1460
 
+#define NORM_PKT 0
+#define END_OF_FILE 1
+
 typedef struct {
     u64 n_seq;
     u32 length;
@@ -24,5 +27,5 @@ typedef struct {
 
 typedef struct {
     u64 n_seq;
-    //char type; TODO: Serve??
+    char type;
 } ack_t;
