@@ -30,8 +30,8 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    //int fd = open_file("/home/frank/Desktop/magistrale/iiw/progetto/ProgettoIIW/code/server/FILES/prova.txt", O_WRONLY | O_CREAT);
-    int fd = open_file("/Users/Daniele-Giorgi/CLionProjects/ProgettoIIW/code/server/FILES/prova.txt", O_WRONLY | O_CREAT);
+    int fd = open_file("/home/frank/Desktop/magistrale/iiw/progetto/ProgettoIIW/code/server/FILES/prova.txt", O_WRONLY | O_CREAT);
+    //int fd = open_file("/Users/Daniele-Giorgi/CLionProjects/ProgettoIIW/code/server/FILES/prova.txt", O_WRONLY | O_CREAT);
 
 
     receive_file(sockfd, (struct sockaddr *) &servaddr, fd);

@@ -30,8 +30,8 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    //char *filepath = "/home/frank/Desktop/magistrale/iiw/progetto/ProgettoIIW/code/client/FILES/divina_commedia.txt";
-    char *filepath = "/Users/Daniele-Giorgi/CLionProjects/ProgettoIIW/code/client/FILES/divina_commedia.txt";
+    char *filepath = "/home/frank/Desktop/magistrale/iiw/progetto/ProgettoIIW/code/client/FILES/divina_commedia.txt";
+    //char *filepath = "/Users/Daniele-Giorgi/CLionProjects/ProgettoIIW/code/client/FILES/divina_commedia.txt";
 
     int fd = open_file(filepath, O_RDONLY);
     send_file(sockfd, (struct sockaddr *) &servaddr, fd);

@@ -95,7 +95,7 @@ static void *receive_ack(void *arg) {
     while(1) {
         //waiting for ACK
         printf("attendo ACK\n");
-        if (recvfrom(sockfd, (void *) ack, sizeof(ack_t), MSG_DONTWAIT,
+        while (recvfrom(sockfd, (void *) ack, sizeof(ack_t), MSG_DONTWAIT,
                                                     servaddr, &slen) < 0) {
             //printf("attendo ACK\n");
             if (errno != EAGAIN && errno != EWOULDBLOCK) {
