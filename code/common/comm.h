@@ -6,5 +6,5 @@
 
 char *list_dir(char *PATH);
 int check_file(char *file, char *list);
-void send_file(int, int, struct sockaddr *, struct sockaddr *, int, char *);
-void receive_file(int, int, struct sockaddr *, struct sockaddr *, int);
+void send_file(int, struct sockaddr *, int);
+void receive_file(int, struct sockaddr *, int);
