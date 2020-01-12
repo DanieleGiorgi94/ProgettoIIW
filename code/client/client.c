@@ -9,7 +9,6 @@ int main(int argc, char **argv)
 {
     struct sockaddr_in servaddr; //IPv4 address
     int sockfd;
-    int n;
 
     if (argc < 2 ) { /* controlla numero degli argomenti */
         fprintf(stderr, "utilizzo: ./client <indirizzo IP server>\n");

@@ -9,6 +9,8 @@ static void *split_file(void *);
 static void *sender(void *);
 static void *receive_ack(void *);
 static void send_pkt(int, pkt_t *, const struct sockaddr *);
+static char sym_lost_pkt(void);
+static void *timeout_handler(void *);
 static pkt_t create_pkt(int, u64);
 
 static void *merge_file(void *);
@@ -32,32 +34,82 @@ static void destroy_mutex(pthread_mutex_t *mtx) {
 //    }
 }
 static void lock_buffer(struct circular_buffer *cb) {
-    if (pthread_mutex_lock(&cb->mtx) != 0){
+    if (pthread_mutex_lock(&cb->mtx) != 0) {
         perror("Errore in pthread_mutex_lock()\n");
         exit(EXIT_FAILURE);
     }
 }
 static void unlock_buffer(struct circular_buffer *cb) {
-    if (pthread_mutex_unlock(&cb->mtx) != 0){
+    if (pthread_mutex_unlock(&cb->mtx) != 0) {
         perror("Errore in pthread_mutex_lock()\n");
         exit(EXIT_FAILURE);
     }
 }
 
 //  ************ SENDER ************
+static char sym_lost_pkt(void) {
+    /* simula perdita pacchetti con probabilita' LOSS_PROB */
+    int i = rand() % 101; // genera numero da 1 a 100
+    return i <= LOSS_PROB;
+}
 static void send_pkt(int sockfd, pkt_t *pkt, const struct sockaddr *servaddr) {
-    if (sendto(sockfd, pkt, sizeof(pkt_t), 0, (struct sockaddr *) servaddr,
-           sizeof(struct sockaddr)) < 0) {
-        perror("Errore in sendto()");
-        exit(EXIT_FAILURE);
+    if (!sym_lost_pkt()) {
+        if (sendto(sockfd, pkt, sizeof(pkt_t), 0, (struct sockaddr *) servaddr,
+               sizeof(struct sockaddr)) < 0) {
+            perror("Errore in sendto()");
+            exit(EXIT_FAILURE);
+        }
+        printf("pkt %ld inviato\n", pkt->header.n_seq);
+    } else {
+        printf("pkt %ld perduto\n", pkt->header.n_seq);
     }
-    printf("pkt %ld inviato\n", pkt->header.n_seq);
+}
+static void *timeout_handler(void *arg) {
+    struct comm_thread *ptd = arg;
+
+    int sockfd = ptd->sockfd;
+    struct circular_buffer *cb = ptd->cb;
+    struct sockaddr *servaddr = ptd->servaddr;
+
+    u32 I;
+    clock_t tspan;
+    pkt_t pkt;
+
+    while(1) {
+        while (cb->S == cb->E){
+            /* buffer circolare vuoto */
+            unlock_buffer(cb);
+            usleep(1000000);
+            lock_buffer(cb);
+        }
+    
+        //check receive_ack() function to understand these next instructions
+        if (cb->S > cb->N) {
+            I = cb->N + BUFFER_SIZE;
+        } else {
+            I = cb->N;
+        }
+    
+        //check all pkts in the window and re-send non-acked pkts whose timer
+        //expired
+        for (u32 i = cb->S; i < I; i++) {
+            if (cb->cb_node[i % BUFFER_SIZE].acked == 0) { //<--- non-acked pkts
+                tspan = clock() - cb->cb_node[i % BUFFER_SIZE].timer;
+                if (tspan >= TIMEOUT) { //<--- timer expired pkts
+                    pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
+                    send_pkt(sockfd, &pkt, servaddr);
+                    printf("inviato per timeout\n");
+                    cb->cb_node[i % BUFFER_SIZE].timer = clock();
+                }
+            }
+        }
+    }
+    return NULL;
 }
 static pkt_t create_pkt(int fd, u64 nseq) {
     char buff[MAX_PAYLOAD_SIZE];
     pkt_t pkt;
 
-    //Legge dal file e crea pacchetti di dim MAX_PAYLOAD_SIZE
     u64 read_byte = read_block(fd, buff, MAX_PAYLOAD_SIZE);
 
     if (read_byte == 0) {
@@ -85,8 +137,8 @@ static void *receive_ack(void *arg) {
     struct comm_thread *ptd = (struct comm_thread *) arg;
 
     int sockfd = ptd->sockfd;
-    struct sockaddr *servaddr = ptd->servaddr;
     struct circular_buffer *cb = ptd->cb;
+    struct sockaddr *servaddr = ptd->servaddr;
 
     ack_t *ack = (ack_t *) dynamic_allocation(sizeof(ack_t));
     u32 slen = sizeof(struct sockaddr);
@@ -159,8 +211,8 @@ static void *receive_ack(void *arg) {
 static void *sender(void *arg) {
     struct comm_thread *ptd = arg;
 
-    struct circular_buffer *cb = ptd->cb;
     int sockfd = ptd->sockfd;
+    struct circular_buffer *cb = ptd->cb;
     struct sockaddr *servaddr = ptd->servaddr;
 
     for(;;) {
@@ -185,14 +237,12 @@ static void *sender(void *arg) {
         if (cb->N + BUFFER_SIZE * (cb->S > cb->N) - cb->S <= WINDOW_SIZE) {
             //printf("window's not full\n");
             if (cb->N != cb->E) {
-                // nextseqnum must not overpass cb->E
+                //nextseqnum must not overpass cb->E
                 pkt_t pkt = cb->cb_node[cb->N].pkt;
-                //if (pkt.header.type == END_OF_FILE) {
-                //    send_pkt(sockfd, &pkt, servaddr);
-                //    return NULL;
-                //}
+                //lock_socket(mtx);
                 send_pkt(sockfd, &pkt, servaddr);
-                cb->cb_node[cb->N].timer = clock(); // start timer
+                //unlock_socket(mtx);
+                cb->cb_node[cb->N].timer = clock(); //start timer
                 cb->N = (cb->N + 1) % BUFFER_SIZE;
             }
         }
@@ -203,8 +253,9 @@ static void *sender(void *arg) {
 }
 static void *split_file(void *arg) {
     struct comm_file_thread *ptd = arg;
-    struct circular_buffer *cb = ptd->cb;
+
     int fd = ptd->fd;
+    struct circular_buffer *cb = ptd->cb;
 
     move_offset(fd, SET, 0);
     
@@ -244,7 +295,7 @@ static void *split_file(void *arg) {
 }
 void send_file(int sockfd, struct sockaddr *servaddr, int fd) {
     struct comm_file_thread sf_thread;
-    struct comm_thread snd_thread, rca_thread;
+    struct comm_thread snd_thread, rca_thread, tmh_thread;
     struct circular_buffer *cb;
 
     cb = (struct circular_buffer *)
@@ -255,20 +306,29 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd) {
 
     create_mutex(&(cb->mtx));
 
+    //split_file's thread
     sf_thread.cb = cb;
     sf_thread.fd = fd;
 
+    //sender's thread
     snd_thread.sockfd = sockfd;
     snd_thread.cb = cb;
     snd_thread.servaddr = servaddr;
 
+    //receive_ack's thread
     rca_thread.sockfd = sockfd;
     rca_thread.cb = cb;
     rca_thread.servaddr = servaddr;
 
+    //timeout_handler's thread
+    tmh_thread.sockfd = sockfd;
+    tmh_thread.cb = cb;
+    tmh_thread.servaddr = servaddr;
+
     if ((pthread_create(&sf_thread.tid, NULL, split_file, &sf_thread) ||
             pthread_create(&snd_thread.tid, NULL, sender, &snd_thread) ||
-            pthread_create(&rca_thread.tid, NULL, receive_ack, &rca_thread))
+            pthread_create(&rca_thread.tid, NULL, receive_ack, &rca_thread) ||
+            pthread_create(&tmh_thread.tid, NULL, timeout_handler, &tmh_thread))
                                                                         != 0) {
         perror("pthread_create() failed");
         exit(EXIT_FAILURE);
@@ -289,26 +349,21 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd) {
 //  ************ RECEIVER ************
 static char sorted_buf_insertion(struct circular_buffer *cb,
                                         struct buf_node cbn, u64 seqnum) {
-//TODO: i pacchetti non vengono mai scartati... non restituisce mai 0
     /* returns 1 when pkt is accepted, 0 when refused */
     u64 i = seqnum % BUFFER_SIZE;
 
     /* refuse pkt if node's busy */
-    if ((cb->cb_node[i].busy == 1) || 
-        (i == (cb->S + BUFFER_SIZE - 1) % BUFFER_SIZE)) {
+    if (cb->cb_node[i].busy == 1) {
             printf("Scarto pacchetto %ld\n", seqnum);
-            return 1; // sends ACK anyway
-    } 
+            return 0;
+    }
 
     cb->cb_node[i] = cbn;
     printf("inserisco pacchetto %ld\n", cbn.pkt.header.n_seq);
     //printf("Inserito in posizione %d\n", i);
 
-    if (cb->S <= cb->E) {
-        if (i > cb->E) cb->E = (i + 1) % BUFFER_SIZE;
-    } else {
-        if (i > cb->E && i < cb->S - 1) cb->E = (i + 1) % BUFFER_SIZE;
-    }
+    if (i > cb->E + (cb->S > cb->E) * BUFFER_SIZE)
+        cb->E = i;
 
     return 1;
 }
@@ -338,7 +393,6 @@ static void *receiver(void *arg) {
 
     unsigned int slen = sizeof(struct sockaddr);
     u64 seqnum;
-    u32 nE;
     pkt_t *pkt;
 
     for(;;) {
@@ -346,10 +400,10 @@ static void *receiver(void *arg) {
         header_t pkt_header = pkt->header;
 
         printf("Attendo pacchetto\n");
-    	while (recvfrom(sockfd, (void *) pkt, sizeof(pkt_t), 0,
+    	while (recvfrom(sockfd, (void *) pkt, sizeof(pkt_t), MSG_DONTWAIT,
                 (struct sockaddr *) servaddr, &slen) < 0) {
             //printf("Attendo pacchetto\n");
-            if (errno != EAGAIN) {
+            if (errno != EAGAIN && errno != EWOULDBLOCK) {
                 perror("Errore in recvfrom()");
                 exit(EXIT_FAILURE);
             }
@@ -362,18 +416,9 @@ static void *receiver(void *arg) {
 
         free_allocation(pkt);
 
+        //printf("receiver lock attempt\n");
     	lock_buffer(cb);
         //printf("receiver lock\n");
-
-    	nE = (cb->E + 1) % BUFFER_SIZE;
-    	while (nE == cb->S){
-            /* circular buffer's full */
-            //printf("receiver unlock\n");
-            unlock_buffer(cb);
-            usleep(100000);
-            lock_buffer(cb);
-            //printf("receiver lock\n");
-    	}	
 
     	printf("Ricevuto pkt %ld\n", seqnum);
 
@@ -383,6 +428,7 @@ static void *receiver(void *arg) {
             //printf("receiver unlock\n");
             unlock_buffer(cb);
             send_ack(sockfd, *servaddr, seqnum, pkt_header.type);
+            //printf("receiver lock attempt\n");
             lock_buffer(cb);
             //printf("receiver lock\n");
         }
@@ -396,9 +442,8 @@ static void *merge_file(void *arg) {
     struct circular_buffer *cb = ptd->cb;
     int fd = ptd->fd;
 
-    u64 written_byte;
-
     for(;;) {
+        //printf("merge file lock attempt\n");
         lock_buffer(cb);
         //printf("merge file lock\n");
 
@@ -407,15 +452,10 @@ static void *merge_file(void *arg) {
             //printf("merge file unlock\n");
             unlock_buffer(cb);
             usleep(100000);
+            //printf("merge file lock attempt\n");
             lock_buffer(cb);
             //printf("merge file lock\n");
         }
-
-        //stampa tutto il buffer circolare e poi termina
-        //for (int i = 0; i < BUFFER_SIZE; i++) {
-        //    printf("%p, %d\n", &cb->cb_node[i].pkt, cb->cb_node[i].acked);
-        //}
-        //return NULL;
 
         //starting from the window's base, write all the pkts to file if
         //circular buffer's node is busy
@@ -423,7 +463,7 @@ static void *merge_file(void *arg) {
             pkt_t pkt = cb->cb_node[cb->S].pkt;
             cb->cb_node[cb->S].busy = 0;
 
-            //printf("Reading pkt %ld from cb\n", pkt.header.n_seq);
+            printf("Reading pkt %ld from cb\n", pkt.header.n_seq);
 
             if (pkt.header.type == END_OF_FILE) {
                 printf("------------------------------------");
@@ -431,7 +471,7 @@ static void *merge_file(void *arg) {
                 printf("------------------------------------\n");
                 return NULL;
             }
-            written_byte = write_block(fd, pkt.payload, pkt.header.length);
+            write_block(fd, pkt.payload, pkt.header.length);
 
             cb->S = (cb->S + 1) % BUFFER_SIZE; 
         }

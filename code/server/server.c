@@ -3,23 +3,22 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-int main(int argc, char **argv)
+int main()
 {
     struct sockaddr_in servaddr;
     int sockfd;
-    socklen_t len;
 
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         perror("socket() failed");
         exit(EXIT_FAILURE);
     }
 
-    struct timeval tv;
-    tv.tv_sec = 0;
-    tv.tv_usec = 1000;
-    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
-        perror("Error");
-    }
+//    struct timeval tv;
+//    tv.tv_sec = 0;
+//    tv.tv_usec = 1000;
+//    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+//        perror("Error");
+//    }
 
     memset((void *) &servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
