@@ -76,6 +76,7 @@ static void *timeout_handler(void *arg) {
     pkt_t pkt;
 
     while(1) {
+        lock_buffer(cb);
         while (cb->S == cb->E){
             /* buffer circolare vuoto */
             unlock_buffer(cb);
@@ -103,6 +104,7 @@ static void *timeout_handler(void *arg) {
                 }
             }
         }
+        unlock_buffer(cb);
     }
     return NULL;
 }
