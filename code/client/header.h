@@ -20,4 +20,7 @@
                  "                                               |\n"
 #define EXIT_LINE "| 4) exit                                 " \
                   "                                         |\n"
+
+#define BUFLEN 512
+
 #endif

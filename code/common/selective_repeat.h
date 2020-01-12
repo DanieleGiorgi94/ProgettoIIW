@@ -3,7 +3,7 @@
 #endif
 
 #define BUFFER_SIZE 400
-#define WINDOW_SIZE 20
+#define WINDOW_SIZE 200
 #define TIMEOUT     2000000
 #define LOSS_PROB   2
 

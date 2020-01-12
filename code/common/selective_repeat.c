@@ -59,9 +59,9 @@ static void send_pkt(int sockfd, pkt_t *pkt, const struct sockaddr *servaddr) {
             perror("Errore in sendto()");
             exit(EXIT_FAILURE);
         }
-        printf("pkt %ld inviato\n", pkt->header.n_seq);
-    } else {
-        printf("pkt %ld perduto\n", pkt->header.n_seq);
+//        printf("pkt %ld inviato\n", pkt->header.n_seq);
+//    } else {
+//        printf("pkt %ld perduto\n", pkt->header.n_seq);
     }
 }
 static void *timeout_handler(void *arg) {
@@ -99,7 +99,7 @@ static void *timeout_handler(void *arg) {
                 if (tspan >= TIMEOUT) { //<--- timer expired pkts
                     pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
                     send_pkt(sockfd, &pkt, servaddr);
-                    printf("inviato per timeout\n");
+//                    printf("inviato per timeout\n");
                     cb->cb_node[i % BUFFER_SIZE].timer = clock();
                 }
             }
@@ -148,19 +148,19 @@ static void *receive_ack(void *arg) {
 
     while(1) {
         //waiting for ACK
-        printf("attendo ACK\n");
+//        printf("attendo ACK\n");
         while (recvfrom(sockfd, (void *) ack, sizeof(ack_t), MSG_DONTWAIT,
                                                     servaddr, &slen) < 0) {
-            //printf("attendo ACK\n");
+//            printf("attendo ACK\n");
             if (errno != EAGAIN && errno != EWOULDBLOCK) {
                 perror("Errore in recvfrom: ricezione dell'ack");
             	exit(EXIT_FAILURE);
             }
         }
  
-        //printf("sender attempt lock in receive_ack\n");
+//        printf("sender attempt lock in receive_ack\n");
         lock_buffer(cb);
-        //printf("sender lock in receive_ack\n");
+//        printf("sender lock in receive_ack\n");
 
         i = ack->n_seq % BUFFER_SIZE;
         index = i;
@@ -190,7 +190,7 @@ static void *receive_ack(void *arg) {
         //if 'i' falls between 'S' and 'I', ACK refers to a pkt in the window
         if (cb->S <= index && index < I){
             cb->cb_node[index].acked = 1;
-            printf("ack %ld ricevuto\n", ack->n_seq);
+//            printf("ack %ld ricevuto\n", ack->n_seq);
         }
 
         //move window's base to the first non-acked pkt of the window
@@ -205,7 +205,7 @@ static void *receive_ack(void *arg) {
             return NULL;
         }
 
-        //printf("sender unlock in receive_ack\n");
+//        printf("sender unlock in receive_ack\n");
         unlock_buffer(cb);
     }
     return NULL;
@@ -218,37 +218,33 @@ static void *sender(void *arg) {
     struct sockaddr *servaddr = ptd->servaddr;
 
     for(;;) {
-        //printf("%d, %d, %d\n", cb->S, cb->N, cb->E);
-
-        //printf("sender attempt lock\n");
+//        printf("sender attempt lock\n");
         lock_buffer(cb);
-        //printf("sender lock\n");
+//        printf("sender lock\n");
 
         while (cb->S == cb->E) {
             /* empty circular buffer (no pkts to send) */
-            //printf("sender unlock\n");
+//            printf("sender unlock\n");
             unlock_buffer(cb);
             usleep_for(100);
-            //printf("sender attempt lock\n");
+//            printf("sender attempt lock\n");
             lock_buffer(cb);
-            //printf("sender lock\n");
+//            printf("sender lock\n");
         }
 
         //check receive_ack() function to understand why if this condition is
         //met then window's not full
         if (cb->N + BUFFER_SIZE * (cb->S > cb->N) - cb->S <= WINDOW_SIZE) {
-            //printf("window's not full\n");
+//            printf("window's not full\n");
             if (cb->N != cb->E) {
                 //nextseqnum must not overpass cb->E
                 pkt_t pkt = cb->cb_node[cb->N].pkt;
-                //lock_socket(mtx);
                 send_pkt(sockfd, &pkt, servaddr);
-                //unlock_socket(mtx);
                 cb->cb_node[cb->N].timer = clock(); //start timer
                 cb->N = (cb->N + 1) % BUFFER_SIZE;
             }
         }
-        //printf("sender unlock\n");
+//        printf("sender unlock\n");
         unlock_buffer(cb);
     }
     return NULL;
@@ -266,7 +262,7 @@ static void *split_file(void *arg) {
 
         u32 nE;
 
-        //printf("pkt %ld created\n", i);
+//        printf("pkt %ld created\n", i);
 
         lock_buffer(cb);
 
@@ -356,13 +352,13 @@ static char sorted_buf_insertion(struct circular_buffer *cb,
 
     /* refuse pkt if node's busy */
     if (cb->cb_node[i].busy == 1) {
-            printf("Scarto pacchetto %ld\n", seqnum);
+//            printf("Scarto pacchetto %ld\n", seqnum);
             return 0;
     }
 
     cb->cb_node[i] = cbn;
-    printf("inserisco pacchetto %ld\n", cbn.pkt.header.n_seq);
-    //printf("Inserito in posizione %d\n", i);
+//    printf("inserisco pacchetto %ld\n", cbn.pkt.header.n_seq);
+//    printf("Inserito in posizione %d\n", i);
 
     if (i > cb->E + (cb->S > cb->E) * BUFFER_SIZE)
         cb->E = i;
@@ -375,7 +371,7 @@ static void send_ack(int sockfd, struct sockaddr servaddr, u64 seqnum,
     ack->n_seq = seqnum;
     ack->type = type;
 
-    printf("sending ack %ld\n", seqnum);
+//    printf("sending ack %ld\n", seqnum);
     /* sends ACK */
     if (sendto(sockfd, (void *)ack, sizeof(ack_t), 0, &servaddr,
             sizeof(servaddr)) < 0) {
@@ -401,10 +397,10 @@ static void *receiver(void *arg) {
     	pkt = (pkt_t *) dynamic_allocation(sizeof(pkt_t));
         header_t pkt_header = pkt->header;
 
-        printf("Attendo pacchetto\n");
+//        printf("Attendo pacchetto\n");
     	while (recvfrom(sockfd, (void *) pkt, sizeof(pkt_t), MSG_DONTWAIT,
                 (struct sockaddr *) servaddr, &slen) < 0) {
-            //printf("Attendo pacchetto\n");
+//            printf("Attendo pacchetto\n");
             if (errno != EAGAIN && errno != EWOULDBLOCK) {
                 perror("Errore in recvfrom()");
                 exit(EXIT_FAILURE);
@@ -418,23 +414,23 @@ static void *receiver(void *arg) {
 
         free_allocation(pkt);
 
-        //printf("receiver lock attempt\n");
+//        printf("receiver lock attempt\n");
     	lock_buffer(cb);
-        //printf("receiver lock\n");
+//        printf("receiver lock\n");
 
-    	printf("Ricevuto pkt %ld\n", seqnum);
+//    	  printf("Ricevuto pkt %ld\n", seqnum);
 
         // inserimento ordinato del pacchetto ricevuto
         if (sorted_buf_insertion(cb, cbn, seqnum)) {
             // invio ack
-            //printf("receiver unlock\n");
+//            printf("receiver unlock\n");
             unlock_buffer(cb);
             send_ack(sockfd, *servaddr, seqnum, pkt_header.type);
-            //printf("receiver lock attempt\n");
+//            printf("receiver lock attempt\n");
             lock_buffer(cb);
-            //printf("receiver lock\n");
+//            printf("receiver lock\n");
         }
-        //printf("receiver unlock\n");
+//        printf("receiver unlock\n");
         unlock_buffer(cb);
     }
 }
@@ -445,18 +441,18 @@ static void *merge_file(void *arg) {
     int fd = ptd->fd;
 
     for(;;) {
-        //printf("merge file lock attempt\n");
+//        printf("merge file lock attempt\n");
         lock_buffer(cb);
-        //printf("merge file lock\n");
+//        printf("merge file lock\n");
 
         while (cb->S == cb->E){
         /* circular buffer's empty */
-            //printf("merge file unlock\n");
+//            printf("merge file unlock\n");
             unlock_buffer(cb);
             usleep(100000);
-            //printf("merge file lock attempt\n");
+//            printf("merge file lock attempt\n");
             lock_buffer(cb);
-            //printf("merge file lock\n");
+//            printf("merge file lock\n");
         }
 
         //starting from the window's base, write all the pkts to file if
@@ -465,7 +461,7 @@ static void *merge_file(void *arg) {
             pkt_t pkt = cb->cb_node[cb->S].pkt;
             cb->cb_node[cb->S].busy = 0;
 
-            printf("Reading pkt %ld from cb\n", pkt.header.n_seq);
+//            printf("Reading pkt %ld from cb\n", pkt.header.n_seq);
 
             if (pkt.header.type == END_OF_FILE) {
                 printf("------------------------------------");
@@ -477,7 +473,7 @@ static void *merge_file(void *arg) {
 
             cb->S = (cb->S + 1) % BUFFER_SIZE; 
         }
-        //printf("merge file unlock\n");
+//        printf("merge file unlock\n");
         unlock_buffer(cb);
     }
 }

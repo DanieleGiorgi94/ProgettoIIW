@@ -2,5 +2,4 @@
 #error You must not include this sub-header file directly
 #endif
 
-
-int request_file(void);
+void get_command_handler();

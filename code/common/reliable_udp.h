@@ -8,6 +8,8 @@ typedef unsigned long u64;
 #include <pthread.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include "udp.h"
 #include "comm.h"
 #include "selective_repeat.h"

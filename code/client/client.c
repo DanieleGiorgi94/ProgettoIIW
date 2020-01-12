@@ -1,13 +1,79 @@
 #include "header.h"
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
 
-#define BUFLEN 512
+#define TEST 0
 
 void print_banner(char *, u32);
-void main_task(void);
+static void main_task(int, struct sockaddr_in);
+char **tokenize_string(char *, char *);
 
+static void main_task(int sockfd, struct sockaddr_in servaddr) {
+    char command[BUFLEN];
+    char **token_vector;
+
+    RESET:
+    printf(">> ");
+
+    if (fgets(command, BUFLEN, stdin) == NULL && errno != EINTR) {
+        perror("fgets");
+        exit(EXIT_FAILURE);
+    }
+
+    int len = (int) strlen(command) - 1;
+    if (len < 3){
+        fprintf(stderr, "Please insert a valid command.\n");
+        goto RESET;
+    }
+
+    if (command[len] == '\n') {
+        command[len] = '\0';
+    }
+
+    token_vector = tokenize_string(command, " ");
+
+    if (strncmp(token_vector[0], "list", 5) == 0) {
+        list_command_handler();
+        goto RESET;
+    }
+
+    if (strncmp(token_vector[0], "get", 4) == 0) {
+        get_command_handler();
+        goto RESET;
+    }
+
+
+    if (strncmp(token_vector[0], "put", 4) == 0) {
+        put_command_handler(token_vector[0], token_vector[1], sockfd, servaddr);
+        goto RESET;
+    }
+
+    if (strncmp(token_vector[0], "exit", 5) == 0) {
+        printf("Processing exit from server...\n");
+        usleep_for(1000000);
+        printf("Bye\n");
+
+        return;
+    }
+
+    if (strncmp(token_vector[0], "list", 5) != 0 &&
+            strncmp(token_vector[0], "get", 4) != 0 &&
+            strncmp(token_vector[0], "exit", 5) &&
+            strncmp(token_vector[0], "put", 4) != 0) {
+        fprintf(stderr, "Please insert a valid command.\n");
+        goto RESET;
+    }
+}
+char **tokenize_string(char *buffer, char *delimiter) {
+    int i = 0;
+    char **token_vector = dynamic_allocation(BUFLEN * sizeof(char *));
+
+    token_vector[i] = strtok(buffer, delimiter);
+    while(token_vector[i]!= NULL) {
+        i++;
+        token_vector[i] = strtok(NULL, delimiter);
+    }
+
+    return token_vector;
+}
 void print_banner(char *ip, u32 port) {
     printf(WELCOME_STRING, ip, port);
     printf("\n"SPACER);
@@ -42,14 +108,12 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    print_banner(inet_ntoa(servaddr.sin_addr), ntohs(servaddr.sin_port));
-
-    char *filepath = "/home/frank/Desktop/magistrale/iiw/progetto/ProgettoIIW/code/client/FILES/divina_commedia.txt";
-    //char *filepath = "/Users/Daniele-Giorgi/CLionProjects/ProgettoIIW/code/client/FILES/divina_commedia.txt";
-
-    int fd = open_file(filepath, O_RDONLY);
-    send_file(sockfd, (struct sockaddr *) &servaddr, fd);
-    close_file(fd);
+    if (TEST == 0) {
+        print_banner(inet_ntoa(servaddr.sin_addr), ntohs(servaddr.sin_port));
+        main_task(sockfd, servaddr);
+    } else {
+        put_command_handler("put", "divina_commedia.txt", sockfd, servaddr);
+    }
 
     return EXIT_SUCCESS;
 }
