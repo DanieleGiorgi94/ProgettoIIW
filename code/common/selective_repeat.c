@@ -153,7 +153,7 @@ static void *receive_ack(void *arg) {
                                                     servaddr, &slen) < 0) {
 //            printf("attendo ACK\n");
             if (errno != EAGAIN && errno != EWOULDBLOCK) {
-                perror("Errore in recvfrom: ricezione dell'ack");
+                perror("recvfrom() (ricezione dell'ack)");
             	exit(EXIT_FAILURE);
             }
         }

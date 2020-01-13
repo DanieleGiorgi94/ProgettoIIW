@@ -4,7 +4,6 @@
 
 #include <dirent.h>
 
-char *list_dir(char *PATH);
-int check_file(char *file, char *list);
 void send_file(int, struct sockaddr *, int);
 void receive_file(int, struct sockaddr *, int);
+char *obtain_path(char *, char *, char);

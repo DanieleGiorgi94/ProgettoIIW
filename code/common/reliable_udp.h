@@ -4,6 +4,8 @@
 typedef unsigned int u32;
 typedef unsigned long u64;
 
+#define BUFLEN 512
+
 #include "posix_library/posix_library.h"
 #include <pthread.h>
 #include <sys/socket.h>
@@ -13,5 +15,6 @@ typedef unsigned long u64;
 #include "udp.h"
 #include "comm.h"
 #include "selective_repeat.h"
+#include "connection.h"
 
 #endif
