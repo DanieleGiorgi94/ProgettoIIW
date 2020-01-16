@@ -49,7 +49,7 @@ void close_file(int fd)
         }
     }
 }
-void move_offset(int fd, char c, off_t offset)
+int move_offset(int fd, char c, off_t offset)
 {
     int r;
     if (c == END) {
@@ -64,4 +64,6 @@ void move_offset(int fd, char c, off_t offset)
         r = lseek(fd, offset, SEEK_SET);
         print_error("lseek()", &r);
     }
+
+    return r;
 }

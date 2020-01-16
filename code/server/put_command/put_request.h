@@ -2,4 +2,4 @@
 #error You must not include this sub-header file directly
 #endif
 
-int receive_file_from_client(void);
+void put_command_handler(int, struct sockaddr_in, char *);

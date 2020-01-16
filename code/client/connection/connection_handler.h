@@ -2,4 +2,4 @@
 #error You must not include this sub-header directly
 #endif
 
-void create_connection(void);
+int create_connection(int, struct sockaddr_in);

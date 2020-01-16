@@ -53,7 +53,7 @@ void close_file(int);
         'S' (set) -> inizio del file + offset
     Terzo argomento: offset
 */
-void move_offset(int, char, off_t);
+int move_offset(int, char, off_t);
 
 /*******LISTA COLLEGATA*******/
 /*
