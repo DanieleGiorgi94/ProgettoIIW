@@ -3,9 +3,9 @@
 #endif
 
 #define BUFFER_SIZE 400
-#define WINDOW_SIZE 200
+#define WINDOW_SIZE 100
 #define TIMEOUT     2000000
-#define LOSS_PROB   2
+#define LOSS_PROB   0
 
 #define PORT   5193
 

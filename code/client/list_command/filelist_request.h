@@ -2,4 +2,6 @@
 #error You must not include this sub-header file directly
 #endif
 
-void list_command_handler(char *, int, struct sockaddr_in);
+#define PATH "/home/frank/Desktop/magistrale/iiw/progetto/ProgettoIIW/code/server/FILES/"
+
+int request_filelist(void);
