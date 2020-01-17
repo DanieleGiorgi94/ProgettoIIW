@@ -2,8 +2,8 @@
 #error You must not include this sub-header file directly
 #endif
 
-#define BUFFER_SIZE 400
-#define WINDOW_SIZE 200
+#define BUFFER_SIZE 2048
+#define WINDOW_SIZE 1024
 #define TIMEOUT     2000000
 #define LOSS_PROB   2
 

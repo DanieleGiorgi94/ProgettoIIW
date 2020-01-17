@@ -141,7 +141,7 @@ static void *receive_ack(void *arg) {
     int sockfd = ptd->sockfd;
     struct circular_buffer *cb = ptd->cb;
     struct sockaddr *servaddr = ptd->servaddr;
-
+    //char *filepath = obtain_path(cmd, token, 0);
     ack_t *ack = (ack_t *) dynamic_allocation(sizeof(ack_t));
     u32 slen = sizeof(struct sockaddr);
     u64 I, i, index;
