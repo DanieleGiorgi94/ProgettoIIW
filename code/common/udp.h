@@ -11,12 +11,6 @@ typedef struct {
     u64 n_seq;
     u32 length;
     u32 rwnd;
-/*Il campo type credo debba distinguere i pacchetti per la connessione tra
-client e server, per i comandi get, put e list, e, siccome il server deve
-rispondere con l'esito delle operazioni richieste dal client, deve distinguere
-l'esito positivo/negativo per ciascuna operazione (ma forse quest'ultima cosa è
-meglio farla usando un ACK: in questo caso il campo type forse potrebbe servire
-per distinguere a quale operazione si riferisce) */
     char type;
 } header_t;
 

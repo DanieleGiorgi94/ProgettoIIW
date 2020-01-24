@@ -4,17 +4,17 @@ void get_command_handler(int sockfd, struct sockaddr_in servaddr,
                          char *filename, char *path) {
 
 
-    syn_t *syn = (syn_t *) dynamic_allocation(sizeof(syn_t));
+    request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
 
     //cerco il file nella lista FILES
 
     if (check_file(filename, list_dir(path))){ //file presente
 
-        syn->flag = FILEON;
-        if (sendto(sockfd, (void *)syn, sizeof(syn_t), 0, (struct sockaddr *) &servaddr,
+        req->type = FILEON;
+        if (sendto(sockfd, (void *) req, sizeof(request_t), 0, (struct sockaddr *) &servaddr,
                    sizeof(servaddr)) < 0) {
-            free_allocation(syn);
-            perror("Errore in sendto: invio dell'ack");
+            free_allocation(req);
+            perror("Errore in sendto: invio del pacchetto request_t");
             exit(EXIT_FAILURE);
         }
         int fd = open_file(strncat(path, filename, strlen(filename)), O_RDONLY);
@@ -23,12 +23,12 @@ void get_command_handler(int sockfd, struct sockaddr_in servaddr,
     }
     else{ //file non presente
 
-        syn->flag = FILEOFF;
+        req->type = FILEOFF;
 
-        if (sendto(sockfd, (void *)syn, sizeof(syn_t), 0, (struct sockaddr *) &servaddr,
+        if (sendto(sockfd, (void *)req, sizeof(request_t), 0, (struct sockaddr *) &servaddr,
                    sizeof(servaddr)) < 0) {
-            free_allocation(syn);
-            perror("Errore in sendto: invio dell'ack");
+            free_allocation(req);
+            perror("Errore in sendto: invio del pacchetto request_t");
             exit(EXIT_FAILURE);
         }
     }

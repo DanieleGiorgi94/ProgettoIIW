@@ -2,15 +2,13 @@
 #error You must not include this sub-header file directly
 #endif
 
-#define SYN 0
-#define SYNACK 1
-#define ACK 2
-
 
 typedef struct {
     u64 initial_n_seq;
-    char flag; //SYN, SYNACK or ACK
-    //eventuali TCP options (pag. 449 del gapil)
+    char SYN;
+    char ACK;
+    char FIN;
+
 } syn_t;
 
 #define GET_REQ 0
