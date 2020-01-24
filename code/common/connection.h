@@ -2,13 +2,11 @@
 #error You must not include this sub-header file directly
 #endif
 
-
 typedef struct {
     u64 initial_n_seq;
     char SYN;
     char ACK;
     char FIN;
-
 } syn_t;
 
 #define GET_REQ 0

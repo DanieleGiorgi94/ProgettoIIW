@@ -3,31 +3,32 @@
 void *create_connection(void *arg) {
     struct service_thread *ptd = (struct service_thread *) arg;
 
-    printf("1\n");
-
     int sockfd = ptd->sockfd;
     struct sockaddr_in servaddr = ptd->servaddr;
     char *no_connections = ptd->no_connections;
     char *path = ptd->path;
 
-    printf("2\n");
-
-
     u32 slen = sizeof(struct sockaddr);
-    printf("3\n");
-
     request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
-    printf("4\n");
-
     syn_t *syn = (syn_t *) dynamic_allocation(sizeof(syn_t));
 
-    printf("5\n");
+//il SYN qua già lo hai ricevuto: lo ricevi nel main_task e a seguito del
+//SYN_ACK il thread principale crea un thread secondario che invia SYN_ACK e
+//continua il three-way handshake. Nel frattempo (se vedi la main_task in
+//server.c), il thread principale si mette in attesa di un altro eventuale SYN
+//di qualche altro client per esempio. In più avevi commmentato il goto RESET
+//alla fine di server.c e quindi, siccome il thread principale terminava, anche
+//i thread figli morivano e tutto si bloccava.
 
+//Quindi non devi metterti in attesa del SYN ma devi
+//inviare direttamente il syn-ack. Non voglio mettere mano sul codice per non
+//combinare casini ma sicuramente devi togliere la recvfrom che segue e quella
+//condizione "if (sin->SYN >0)".
 
+    printf("Attendo SYN\n");
     //attendi il comando del client
     while (recvfrom(sockfd, (void *) syn, sizeof(syn_t), MSG_DONTWAIT,
                                     (struct sockaddr *) &servaddr, &slen) < 0) {
-        printf("6\n");
 
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
             perror("recvfrom() failed");

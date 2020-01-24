@@ -27,7 +27,6 @@ RESET:
     }
 
     if (syn->SYN <= 0) //three-way handshake starts with SYN!
-
         goto RESET;
 
 
@@ -36,8 +35,7 @@ RESET:
         *no_connections += 1;
     }
 
-    //goto RESET;
-
+    goto RESET;
 }
 static void create_service_thread(int sockfd, struct sockaddr_in servaddr,
         char *no_connections, char *path) {
