@@ -10,6 +10,7 @@ struct service_thread {
     char *no_connections;
     char *path;
     pthread_t tid;
+    u64 isn;
 };
 
 void *create_connection(void *);

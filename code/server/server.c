@@ -1,7 +1,7 @@
 #include "header.h"
 
 static void main_task(int, struct sockaddr_in);
-static void create_service_thread(int, struct sockaddr_in, char *, char *);
+static void create_service_thread(int, struct sockaddr_in, char *, char *, u64);
 
 static void main_task(int sockfd, struct sockaddr_in servaddr) {
     char *no_connections = dynamic_allocation(sizeof(*no_connections));
@@ -14,6 +14,7 @@ static void main_task(int sockfd, struct sockaddr_in servaddr) {
 
 RESET:
 
+    /* Waiting for a SYN from a client to start communication */
     while (recvfrom(sockfd, (void *) syn, sizeof(syn_t), MSG_DONTWAIT,
                                 (struct sockaddr *) &servaddr, &slen) < 0) {
 
@@ -26,19 +27,21 @@ RESET:
         }
     }
 
-    if (syn->SYN <= 0) //three-way handshake starts with SYN!
+    if (syn->SYN != 1 ) //three-way handshake starts with SYN!
         goto RESET;
 
 
     if (*no_connections < MAX_CONNECTIONS) {
-        create_service_thread(sockfd, servaddr, no_connections, path);
+        create_service_thread(sockfd, servaddr, no_connections, path, syn->initial_n_seq);
         *no_connections += 1;
+        printf("Creata connessione n. %d\n", *no_connections);
+
     }
 
     goto RESET;
 }
 static void create_service_thread(int sockfd, struct sockaddr_in servaddr,
-        char *no_connections, char *path) {
+        char *no_connections, char *path, u64 client_isn) {
     struct service_thread s_thread;
 
 
@@ -46,6 +49,7 @@ static void create_service_thread(int sockfd, struct sockaddr_in servaddr,
     s_thread.servaddr = servaddr;
     s_thread.no_connections = no_connections;
     s_thread.path = path;
+    s_thread.isn = client_isn;
 
 
     if (pthread_create(&s_thread.tid, NULL, create_connection,

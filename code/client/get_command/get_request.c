@@ -11,18 +11,22 @@ void get_command_handler(char *cmd, char *token, int sockfd,
 
         u32 slen = sizeof(struct sockaddr);
 
-        if (create_connection(sockfd, servaddr) == 1) {
+        if (create_connection(sockfd, servaddr)) {
+            /* Threeway handshake completed */
 
             rqst->type = GET_REQ;
             strncpy(rqst->filename, token, BUFLEN);
+            printf("Sending GET_REQ.\n");
             if (sendto(sockfd, rqst, sizeof(request_t), 0,
                        (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
                 perror("errore in sendto");
                 exit(EXIT_FAILURE);
             }
 
+            printf("Waiting for FILEON from server.\n");
             while (recvfrom(sockfd, (void *) rqst, sizeof(request_t), MSG_DONTWAIT,
-                            (struct sockaddr *) &servaddr, &slen) < 0) {
+                            (struct sockaddr *) &servaddr, &slen) < 0
+                                    && rqst->type <= 0) {
                 if (errno != EAGAIN && errno != EWOULDBLOCK) {
                     perror("recvfrom() (ricezione del pacchetto request_t)");
                     exit(EXIT_FAILURE);
