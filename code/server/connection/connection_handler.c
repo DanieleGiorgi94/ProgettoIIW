@@ -31,9 +31,12 @@ void *create_connection(void *arg) {
     }
     printf("Sent SYN-ACK %d %d, server_isn: %lu\n", syn->SYN, syn->ACK, syn->initial_n_seq);
 
+    /* Credo che dovremmo togliere la distanziazione tra i pacchetti e farne di un tipo
+     * unico, dopodiché qui nell'ack invece di riceverlo singolarmente lo riceviamo
+     * congiuntamente alla richiesta GET/PUT/LIST */
+
     while (recvfrom(sockfd, (void *) syn, sizeof(syn_t), MSG_DONTWAIT, //waiting for ACK
-                    (struct sockaddr *) &servaddr, &slen) < 0 &&
-           syn->SYN != 0 && syn->ACK != (char) server_isn + 1) {
+                    (struct sockaddr *) &servaddr, &slen) < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
             perror("recvfrom() failed");
             free(syn);
@@ -42,36 +45,38 @@ void *create_connection(void *arg) {
     }
     printf("ACK %d received. syn: %d\n", syn->ACK, syn->SYN);
 
+    if (syn->SYN == 0 && syn->ACK == (char) server_isn + 1) {
 
-    /******* 3Way Handshake completed ********/
+        /******* 3Way Handshake completed ********/
 
-    //attendi il comando con il filename del client
-    printf("Waiting for GET_REQ from a client...\n");
-    while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
-                    (struct sockaddr *) &servaddr, &slen) < 0
-                            && req->type <= 0) {
-        if (errno != EAGAIN && errno != EWOULDBLOCK) {
-            perror("recvfrom() failed");
-            free(req);
-            return NULL;
+        //attendi il comando con il filename del client
+        printf("Waiting for REQ from a client...\n");
+        while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
+                        (struct sockaddr *) &servaddr, &slen) < 0
+               && req->type <= 0) {
+            if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                perror("recvfrom() failed");
+                free(req);
+                return NULL;
+            }
         }
+
+        printf("%s\n", req->filename);
+
+        if (req->type == GET_REQ)
+            get_command_handler(sockfd, servaddr, req->filename, path);
+        else if (req->type == PUT_REQ)
+            put_command_handler(sockfd, servaddr, req->filename);
+        else if (req->type == LIST_REQ)
+            list_command_handler(sockfd, servaddr);
+
+
     }
 
-    printf("%s\n", req->filename);
-
-    if (req->type == GET_REQ)
-        get_command_handler(sockfd, servaddr, req->filename, path);
-    else if (req->type == PUT_REQ)
-        put_command_handler(sockfd, servaddr, req->filename);
-    else if (req->type == LIST_REQ)
-        list_command_handler(sockfd, servaddr);
-
-
-    return NULL;
-    /*printf("ACK not correctly received.\n");
+    printf("ACK not correctly received.\n");
 
     free(req);
     *no_connections -= 1;
-    return NULL;*/
+    return NULL;
 
 }
