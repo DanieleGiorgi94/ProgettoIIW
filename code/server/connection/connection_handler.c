@@ -13,43 +13,39 @@ void *create_connection(void *arg) {
 
     u32 slen = sizeof(struct sockaddr);
     request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
-    syn_t *syn = (syn_t *) dynamic_allocation(sizeof(syn_t));
 
     u64 server_isn = rand() % 100;
 
 
-    syn->initial_n_seq = server_isn;
-    syn->SYN = 1;
-    syn->ACK = client_isn + 1;
-    syn->FIN = 0;
+    req->initial_n_seq = server_isn;
+    req->SYN = 1;
+    req->ACK = client_isn + 1;
+    req->FIN = 0;
 
-    if (sendto(sockfd, (void *) syn, sizeof(syn_t), 0, (struct sockaddr *) &servaddr,
+    if (sendto(sockfd, (void *) req, sizeof(request_t), 0, (struct sockaddr *) &servaddr,
                sizeof(servaddr)) < 0) {
-        free_allocation(syn);
-        perror("Errore in sendto: invio del pacchetto syn_t");
+        free_allocation(req);
+        perror("Errore in sendto: invio del pacchetto request_t");
         exit(EXIT_FAILURE);
     }
-    printf("Sent SYN-ACK %d %d, server_isn: %lu\n", syn->SYN, syn->ACK, syn->initial_n_seq);
+    //printf("Sent SYN-ACK %d %d, server_isn: %lu\n", req->SYN, req->ACK, req->initial_n_seq);
 
-    /* Credo che dovremmo togliere la distanziazione tra i pacchetti e farne di un tipo
-     * unico, dopodiché qui nell'ack invece di riceverlo singolarmente lo riceviamo
-     * congiuntamente alla richiesta GET/PUT/LIST */
 
-    while (recvfrom(sockfd, (void *) syn, sizeof(syn_t), MSG_DONTWAIT, //waiting for ACK
+    while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT, //waiting for ACK + REQ
                     (struct sockaddr *) &servaddr, &slen) < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
             perror("recvfrom() failed");
-            free(syn);
+            free(req);
             return NULL;
         }
     }
-    printf("ACK %d received. syn: %d\n", syn->ACK, syn->SYN);
+    printf("ACK %d received.\n", req->ACK);
 
-    if (syn->SYN == 0 && syn->ACK == (char) server_isn + 1) {
+    if (req->SYN == 0 && req->ACK == (char) server_isn + 1) {
 
         /******* 3Way Handshake completed ********/
 
-        //attendi il comando con il filename del client
+      /*  //attendi il comando con il filename del client
         printf("Waiting for REQ from a client...\n");
         while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
                         (struct sockaddr *) &servaddr, &slen) < 0
@@ -60,7 +56,7 @@ void *create_connection(void *arg) {
                 return NULL;
             }
         }
-
+*/
         printf("%s\n", req->filename);
 
         if (req->type == GET_REQ)

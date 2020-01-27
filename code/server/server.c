@@ -5,7 +5,7 @@ static void create_service_thread(int, struct sockaddr_in, char *, char *, u64);
 
 static void main_task(int sockfd, struct sockaddr_in servaddr) {
     char *no_connections = dynamic_allocation(sizeof(*no_connections));
-    syn_t *syn = (syn_t *) dynamic_allocation(sizeof(syn_t));
+    request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
 
     char *path = obtain_path(NULL, NULL, 1);
     u32 slen = sizeof(struct sockaddr);
@@ -15,26 +15,26 @@ static void main_task(int sockfd, struct sockaddr_in servaddr) {
 RESET:
 
     /* Waiting for a SYN from a client to start communication */
-    while (recvfrom(sockfd, (void *) syn, sizeof(syn_t), MSG_DONTWAIT,
+    while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
                                 (struct sockaddr *) &servaddr, &slen) < 0) {
 
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
             perror("recvfrom() failed");
             free(no_connections);
-            free(syn);
+            free(req);
             free(path);
             return;
         }
     }
 
-    if (syn->SYN != 1 ) //three-way handshake starts with SYN!
+    if (req->SYN != 1 ) //three-way handshake starts with SYN!
         goto RESET;
 
 
     if (*no_connections < MAX_CONNECTIONS) {
-        create_service_thread(sockfd, servaddr, no_connections, path, syn->initial_n_seq);
+        create_service_thread(sockfd, servaddr, no_connections, path, req->initial_n_seq);
         *no_connections += 1;
-        printf("Creata connessione n. %d\n", *no_connections);
+        //printf("Creata connessione n. %d\n", *no_connections);
 
     }
 
