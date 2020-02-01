@@ -39,13 +39,13 @@ void *create_connection(void *arg) {
             return NULL;
         }
     }
-    printf("ACK %d received.\n", req->ACK);
+    //printf("ACK %d received.\n", req->ACK);
 
     if (req->SYN == 0 && req->ACK == (char) server_isn + 1) {
 
         /******* 3Way Handshake completed ********/
 
-        printf("%s\n", req->payload);
+        //printf("%s\n", req->payload);
 
         if (req->type == GET_REQ)
             get_command_handler(sockfd, servaddr, req->payload, path);

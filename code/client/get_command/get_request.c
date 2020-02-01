@@ -7,6 +7,7 @@ void get_command_handler(char *cmd, char *token, int sockfd,
     } else {
 
         //Manda al server il pacchetto con il nome del file da cercare
+        char *path = obtain_path(cmd, token, 0);
         request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
 
         u32 slen = sizeof(struct sockaddr);
@@ -28,8 +29,7 @@ void get_command_handler(char *cmd, char *token, int sockfd,
 
                 printf("Il file è presente\n");
 
-
-                int fd = open_file(token, O_WRONLY | O_CREAT);
+                int fd = open_file(path, O_WRONLY | O_CREAT);
                 /* Inizio ricezione file */
                 receive_file(sockfd, (struct sockaddr *) &servaddr, fd);
                 close_file(fd);
