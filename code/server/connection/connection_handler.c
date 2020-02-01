@@ -53,6 +53,8 @@ void *create_connection(void *arg) {
             put_command_handler(sockfd, servaddr, req->payload, path);
         else if (req->type == LIST_REQ)
             list_command_handler(sockfd, servaddr, path);
+        else if (req->type == EXIT_REQ)
+            exit_command_handler(sockfd, servaddr);
 
         free(req);
         return NULL;

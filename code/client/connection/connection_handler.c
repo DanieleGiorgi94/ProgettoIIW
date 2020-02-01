@@ -88,3 +88,15 @@ int create_connection(int sockfd, struct sockaddr_in servaddr, char *cmd, char *
         return 0;
     }
 }
+
+void terminate_connection(char *cmd, int sockfd, struct sockaddr_in servaddr){
+
+    //Invia FIN
+
+    // Aspetta FIN-ACK
+
+    // Invia ACK
+
+    printf("Bye\n");
+    exit(EXIT_SUCCESS);
+}
