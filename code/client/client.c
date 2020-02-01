@@ -32,7 +32,7 @@ static void main_task(int sockfd, struct sockaddr_in servaddr) {
     token = token_vector[1];
 
     if (strncmp(cmd, "list", 5) == 0) {
-        list_command_handler(cmd, sockfd, servaddr);
+        list_command_handler(cmd, token, sockfd, servaddr);
         goto RESET;
     }
 

@@ -45,34 +45,23 @@ void *create_connection(void *arg) {
 
         /******* 3Way Handshake completed ********/
 
-      /*  //attendi il comando con il filename del client
-        printf("Waiting for REQ from a client...\n");
-        while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
-                        (struct sockaddr *) &servaddr, &slen) < 0
-               && req->type <= 0) {
-            if (errno != EAGAIN && errno != EWOULDBLOCK) {
-                perror("recvfrom() failed");
-                free(req);
-                return NULL;
-            }
-        }
-*/
-        printf("%s\n", req->filename);
+        printf("%s\n", req->payload);
 
         if (req->type == GET_REQ)
-            get_command_handler(sockfd, servaddr, req->filename, path);
+            get_command_handler(sockfd, servaddr, req->payload, path);
         else if (req->type == PUT_REQ)
-            put_command_handler(sockfd, servaddr, req->filename);
+            put_command_handler(sockfd, servaddr, req->payload, path);
         else if (req->type == LIST_REQ)
-            list_command_handler(sockfd, servaddr);
+            list_command_handler(sockfd, servaddr, path);
 
+        free(req);
+        return NULL;
 
+    }else {
+
+        printf("ACK not correctly received.\n");
+        free(req);
+        *no_connections -= 1;
+        return NULL;
     }
-
-    printf("ACK not correctly received.\n");
-
-    free(req);
-    *no_connections -= 1;
-    return NULL;
-
 }

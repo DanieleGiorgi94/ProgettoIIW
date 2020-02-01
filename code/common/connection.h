@@ -21,5 +21,5 @@ typedef struct {
     char ACK;
     char FIN;
     char type; //GET_REQ, PUT_REQ or LIST_REQ
-    char filename[BUFLEN];
+    char payload[BUFLEN];
 } request_t;

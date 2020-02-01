@@ -11,7 +11,7 @@ void get_command_handler(char *cmd, char *token, int sockfd,
 
         u32 slen = sizeof(struct sockaddr);
 
-        if (create_connection(sockfd, servaddr, token)) {
+        if (create_connection(sockfd, servaddr, cmd, token)) {
             /* Threeway handshake completed */
 
             printf("Waiting for FILEON from server.\n");
@@ -41,7 +41,5 @@ void get_command_handler(char *cmd, char *token, int sockfd,
                 return;
             }
         }
-
     }
-
 }

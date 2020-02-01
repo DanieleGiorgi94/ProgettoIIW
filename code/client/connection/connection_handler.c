@@ -1,6 +1,6 @@
 #include "../header.h"
 
-int create_connection(int sockfd, struct sockaddr_in servaddr, char *token) {
+int create_connection(int sockfd, struct sockaddr_in servaddr, char *cmd, char *token) {
 
     /* 3Way Handshake
      * TODO Rivedere bene pag. 509 Gapil per l'intestazione IP + TCP del pacchetto.
@@ -41,14 +41,28 @@ int create_connection(int sockfd, struct sockaddr_in servaddr, char *token) {
 
         u64 client_isn = req->ACK;
 
-        printf("%d\n", (char) req->initial_n_seq);
-
-        req->type = GET_REQ;
         req->ACK = (char) req->initial_n_seq + 1; // server_isn+1
         req->initial_n_seq = client_isn; //client_isn +1
         req->SYN = 0;
-        strncpy(req->filename, token, BUFLEN);
 
+        if (strncmp(cmd, "get", 4) == 0) {
+            req->type = GET_REQ;
+            strncpy(req->payload, token, BUFLEN);
+        }
+        if (strncmp(cmd, "put", 4) == 0) {
+            req->type = PUT_REQ;
+            strncpy(req->payload, token, BUFLEN);
+        }
+        if (strncmp(cmd, "list", 5) == 0)
+            req->type = LIST_REQ;
+
+
+
+        /* Mando 3 volte perché almeno sono quasi sicuro che il server almeno uno
+         * lo riceve!!!
+         *
+         * TODO Mettere un timer di ritrasmissione ACK al posto di queste 3 chiamate
+         * */
         if (sendto(sockfd, req, sizeof(request_t), 0,
                    (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
             perror("errore in sendto");
