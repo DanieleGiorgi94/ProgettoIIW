@@ -7,6 +7,7 @@
 #include "list_command/list_request.h"
 #include "get_command/get_request.h"
 #include "put_command/put_request.h"
+#include "exit_command/exit_request.h"
 #include "connection/connection_handler.h"
 
 #endif

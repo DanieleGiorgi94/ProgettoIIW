@@ -3,3 +3,5 @@
 #endif
 
 int create_connection(int, struct sockaddr_in, char *cmd, char *token);
+
+int close_connection(int, struct sockaddr_in);

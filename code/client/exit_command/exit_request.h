@@ -2,4 +2,4 @@
 #error You must not include this sub-header file directly
 #endif
 
-void exit_command_handler(char *cmd, int sockfd, struct sockaddr_in);
+void exit_command_handler(int sockfd, struct sockaddr_in);

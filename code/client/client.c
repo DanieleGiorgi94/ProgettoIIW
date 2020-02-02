@@ -49,8 +49,7 @@ static void main_task(int sockfd, struct sockaddr_in servaddr) {
 
     if (strncmp(cmd, "exit", 5) == 0) {
         printf("Processing exit from server...\n");
-        exit_command_handler(cmd, sockfd, servaddr); //Gestione terminazione connessione
-
+        exit_command_handler(sockfd, servaddr); //gestione terminazione connessione
     }
 
     if (strncmp(cmd, "list", 5) != 0 && strncmp(cmd, "get", 4) != 0 &&

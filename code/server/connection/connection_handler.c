@@ -30,8 +30,8 @@ void *create_connection(void *arg) {
     }
     //printf("Sent SYN-ACK %d %d, server_isn: %lu\n", req->SYN, req->ACK, req->initial_n_seq);
 
-
-    while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT, //waiting for ACK + REQ
+    LISTEN:
+    while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT, //waiting for REQ
                     (struct sockaddr *) &servaddr, &slen) < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
             perror("recvfrom() failed");
@@ -39,13 +39,12 @@ void *create_connection(void *arg) {
             return NULL;
         }
     }
-    //printf("ACK %d received.\n", req->ACK);
+    printf("%d %d %d.\n", req->FIN, req->type, (char) req->initial_n_seq);
 
-    if (req->SYN == 0 && req->ACK == (char) server_isn + 1) {
+    if (req->SYN == 0 && (req->ACK == (char) server_isn + 1
+    || req->FIN >0 ) ) {
 
         /******* 3Way Handshake completed ********/
-
-        //printf("%s\n", req->payload);
 
         if (req->type == GET_REQ)
             get_command_handler(sockfd, servaddr, req->payload, path);
@@ -54,10 +53,10 @@ void *create_connection(void *arg) {
         else if (req->type == LIST_REQ)
             list_command_handler(sockfd, servaddr, path);
         else if (req->type == EXIT_REQ)
-            exit_command_handler(sockfd, servaddr);
+            exit_command_handler(sockfd, req->FIN, ptd->no_connections, servaddr);
 
         free(req);
-        return NULL;
+        goto LISTEN;
 
     }else {
 
