@@ -17,7 +17,7 @@ static void *merge_file(void *);
 static void *receiver(void *);
 static void send_ack(int, struct sockaddr, u64, char type);
 static char sorted_buf_insertion(struct circular_buffer *, struct buf_node,
-                                                                        u64);
+                                 u64);
 
 //  ************ MUTEX ************
 static void create_mutex(pthread_mutex_t *mtx) {
@@ -55,7 +55,7 @@ static char sym_lost_pkt(void) {
 static void send_pkt(int sockfd, pkt_t *pkt, const struct sockaddr *servaddr) {
     if (!sym_lost_pkt()) {
         if (sendto(sockfd, pkt, sizeof(pkt_t), 0, (struct sockaddr *) servaddr,
-               sizeof(struct sockaddr)) < 0) {
+                   sizeof(struct sockaddr)) < 0) {
             perror("Errore in sendto()");
             exit(EXIT_FAILURE);
         }
@@ -83,14 +83,14 @@ static void *timeout_handler(void *arg) {
             usleep(1000000);
             lock_buffer(cb);
         }
-    
+
         //check receive_ack() function to understand these next instructions
         if (cb->S > cb->N) {
             I = cb->N + BUFFER_SIZE;
         } else {
             I = cb->N;
         }
-    
+
         //check all pkts in the window and re-send non-acked pkts whose timer
         //expired
         for (u32 i = cb->S; i < I; i++) {
@@ -150,14 +150,14 @@ static void *receive_ack(void *arg) {
         //waiting for ACK
 //        printf("attendo ACK\n");
         while (recvfrom(sockfd, (void *) ack, sizeof(ack_t), MSG_DONTWAIT,
-                                                    servaddr, &slen) < 0) {
+                        servaddr, &slen) < 0) {
 //            printf("attendo ACK\n");
             if (errno != EAGAIN && errno != EWOULDBLOCK) {
                 perror("recvfrom() (ricezione dell'ack)");
-            	exit(EXIT_FAILURE);
+                exit(EXIT_FAILURE);
             }
         }
- 
+
 //        printf("sender attempt lock in receive_ack\n");
         lock_buffer(cb);
 //        printf("sender lock in receive_ack\n");
@@ -256,7 +256,7 @@ static void *split_file(void *arg) {
     struct circular_buffer *cb = ptd->cb;
 
     move_offset(fd, SET, 0);
-    
+
     for (u64 i = 0; 1; i++) {
         pkt_t pkt = create_pkt(fd, i);
 
@@ -268,10 +268,10 @@ static void *split_file(void *arg) {
 
         nE = (cb->E + 1) % BUFFER_SIZE;
         while (nE == cb->S) {
-        	/* circular buffer's full */
-        	unlock_buffer(cb);
-        	usleep(100000);
-        	lock_buffer(cb);
+            /* circular buffer's full */
+            unlock_buffer(cb);
+            usleep(100000);
+            lock_buffer(cb);
         }
 
         struct buf_node cbn;
@@ -297,7 +297,7 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd) {
     struct circular_buffer *cb;
 
     cb = (struct circular_buffer *)
-        dynamic_allocation(sizeof(struct circular_buffer));
+            dynamic_allocation(sizeof(struct circular_buffer));
     cb->E = 0;
     cb->S = 0;
     cb->N = 0;
@@ -324,16 +324,16 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd) {
     tmh_thread.servaddr = servaddr;
 
     if ((pthread_create(&sf_thread.tid, NULL, split_file, &sf_thread) ||
-            pthread_create(&snd_thread.tid, NULL, sender, &snd_thread) ||
-            pthread_create(&rca_thread.tid, NULL, receive_ack, &rca_thread) ||
-            pthread_create(&tmh_thread.tid, NULL, timeout_handler, &tmh_thread))
-                                                                        != 0) {
+         pthread_create(&snd_thread.tid, NULL, sender, &snd_thread) ||
+         pthread_create(&rca_thread.tid, NULL, receive_ack, &rca_thread) ||
+         pthread_create(&tmh_thread.tid, NULL, timeout_handler, &tmh_thread))
+        != 0) {
         perror("pthread_create() failed");
         exit(EXIT_FAILURE);
     }
 
     if ((pthread_join(sf_thread.tid, NULL) ||
-            pthread_join(snd_thread.tid, NULL)) != 0) {
+         pthread_join(snd_thread.tid, NULL)) != 0) {
         destroy_mutex(&(cb->mtx));
         free_allocation(cb);
         perror("Errore in pthread_join()");
@@ -346,14 +346,14 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd) {
 
 //  ************ RECEIVER ************
 static char sorted_buf_insertion(struct circular_buffer *cb,
-                                        struct buf_node cbn, u64 seqnum) {
+                                 struct buf_node cbn, u64 seqnum) {
     /* returns 1 when pkt is accepted, 0 when refused */
     u64 i = seqnum % BUFFER_SIZE;
 
     /* refuse pkt if node's busy */
     if (cb->cb_node[i].busy == 1) {
 //            printf("Scarto pacchetto %ld\n", seqnum);
-            return 0;
+        return 0;
     }
 
     cb->cb_node[i] = cbn;
@@ -366,7 +366,7 @@ static char sorted_buf_insertion(struct circular_buffer *cb,
     return 1;
 }
 static void send_ack(int sockfd, struct sockaddr servaddr, u64 seqnum,
-                                                        char type) {
+                     char type) {
     ack_t *ack = (ack_t *) dynamic_allocation(sizeof(ack_t));
     ack->n_seq = seqnum;
     ack->type = type;
@@ -374,10 +374,10 @@ static void send_ack(int sockfd, struct sockaddr servaddr, u64 seqnum,
 //    printf("sending ack %ld\n", seqnum);
     /* sends ACK */
     if (sendto(sockfd, (void *)ack, sizeof(ack_t), 0, &servaddr,
-            sizeof(servaddr)) < 0) {
+               sizeof(servaddr)) < 0) {
         free_allocation(ack);
         perror("Errore in sendto: invio dell'ack");
-        exit(EXIT_FAILURE); 
+        exit(EXIT_FAILURE);
     }
 
     free_allocation(ack);
@@ -394,28 +394,28 @@ static void *receiver(void *arg) {
     pkt_t *pkt;
 
     for(;;) {
-    	pkt = (pkt_t *) dynamic_allocation(sizeof(pkt_t));
+        pkt = (pkt_t *) dynamic_allocation(sizeof(pkt_t));
         header_t pkt_header = pkt->header;
 
 //        printf("Attendo pacchetto\n");
-    	while (recvfrom(sockfd, (void *) pkt, sizeof(pkt_t), MSG_DONTWAIT,
-                (struct sockaddr *) servaddr, &slen) < 0) {
+        while (recvfrom(sockfd, (void *) pkt, sizeof(pkt_t), MSG_DONTWAIT,
+                        (struct sockaddr *) servaddr, &slen) < 0) {
 //            printf("Attendo pacchetto\n");
             if (errno != EAGAIN && errno != EWOULDBLOCK) {
                 perror("Errore in recvfrom()");
                 exit(EXIT_FAILURE);
             }
-    	}
+        }
 
-    	struct buf_node cbn;
-    	cbn.pkt = *pkt;
-    	cbn.busy = 1;
-    	seqnum = pkt->header.n_seq;
+        struct buf_node cbn;
+        cbn.pkt = *pkt;
+        cbn.busy = 1;
+        seqnum = pkt->header.n_seq;
 
         free_allocation(pkt);
 
 //        printf("receiver lock attempt\n");
-    	lock_buffer(cb);
+        lock_buffer(cb);
 //        printf("receiver lock\n");
 
 //    	  printf("Ricevuto pkt %ld\n", seqnum);
@@ -446,7 +446,7 @@ static void *merge_file(void *arg) {
 //        printf("merge file lock\n");
 
         while (cb->S == cb->E){
-        /* circular buffer's empty */
+            /* circular buffer's empty */
 //            printf("merge file unlock\n");
             unlock_buffer(cb);
             usleep(100000);
@@ -471,7 +471,7 @@ static void *merge_file(void *arg) {
             }
             write_block(fd, pkt.payload, pkt.header.length);
 
-            cb->S = (cb->S + 1) % BUFFER_SIZE; 
+            cb->S = (cb->S + 1) % BUFFER_SIZE;
         }
 //        printf("merge file unlock\n");
         unlock_buffer(cb);
@@ -484,7 +484,7 @@ void receive_file(int sockfd, struct sockaddr *servaddr, int fd) {
     struct circular_buffer *cb;
 
     cb = (struct circular_buffer *)
-        dynamic_allocation(sizeof(struct circular_buffer));
+            dynamic_allocation(sizeof(struct circular_buffer));
     cb->S = 0;
     cb->E = 0;
     cb->N = 0;
@@ -499,13 +499,13 @@ void receive_file(int sockfd, struct sockaddr *servaddr, int fd) {
     rcv_thread.servaddr = servaddr;
 
     if ((pthread_create(&mf_thread.tid, NULL, merge_file, &mf_thread) ||
-        pthread_create(&rcv_thread.tid, NULL, receiver, &rcv_thread)) != 0) {
+         pthread_create(&rcv_thread.tid, NULL, receiver, &rcv_thread)) != 0) {
         perror("pthread_create() failed");
         exit(EXIT_FAILURE);
     }
 
     if ((pthread_join(mf_thread.tid, NULL) ||
-            pthread_join(rcv_thread.tid, NULL)) != 0) {
+         pthread_join(rcv_thread.tid, NULL)) != 0) {
         destroy_mutex(&(cb->mtx));
         free_allocation(cb);
         perror("Errore in pthread_join()");

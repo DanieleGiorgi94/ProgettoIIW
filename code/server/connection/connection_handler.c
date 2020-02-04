@@ -28,18 +28,18 @@ void *create_connection(void *arg) {
         perror("Errore in sendto: invio del pacchetto request_t");
         exit(EXIT_FAILURE);
     }
-    //printf("Sent SYN-ACK %d %d, server_isn: %lu\n", req->SYN, req->ACK, req->initial_n_seq);
+    printf("Sent SYN-ACK %d %d, server_isn: %lu\n", req->SYN, req->ACK, req->initial_n_seq);
 
     LISTEN:
     while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT, //waiting for REQ
-                    (struct sockaddr *) &servaddr, &slen) < 0) {
+                    (struct sockaddr *) &servaddr, &slen) < 0){
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
             perror("recvfrom() failed");
             free(req);
             return NULL;
         }
     }
-    printf("%d %d %d.\n", req->FIN, req->type, (char) req->initial_n_seq);
+    printf("%d %d %d %d\n", req->ACK, req->type, (char) req->initial_n_seq, (char) server_isn+1);
 
     if (req->SYN == 0 && (req->ACK == (char) server_isn + 1
     || req->FIN >0 ) ) {
@@ -55,13 +55,12 @@ void *create_connection(void *arg) {
         else if (req->type == EXIT_REQ)
             exit_command_handler(sockfd, req->FIN, ptd->no_connections, servaddr);
 
-        free(req);
         goto LISTEN;
 
     }else {
 
         printf("ACK not correctly received.\n");
-        free(req);
+        //free(req);
         *no_connections -= 1;
         return NULL;
     }

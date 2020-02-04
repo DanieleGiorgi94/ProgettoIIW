@@ -1,6 +1,8 @@
 #include "../header.h"
 
-int create_connection(int sockfd, struct sockaddr_in servaddr, char *cmd, char *token) {
+
+int create_connection(int sockfd, struct sockaddr_in servaddr, char *cmd, char *token,
+        char *connected, u64 *server_isn) {
 
     /* 3Way Handshake
      * TODO Rivedere bene pag. 509 Gapil per l'intestazione IP + TCP del pacchetto.
@@ -9,9 +11,23 @@ int create_connection(int sockfd, struct sockaddr_in servaddr, char *cmd, char *
     request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
     u32 slen = sizeof(struct sockaddr);
 
-    srand(time(NULL));
-
+    srand(time(NULL) + getpid());
     u64 client_isn = rand() % 100;
+
+    printf("Connected: %d\n", *connected);
+
+    if (*connected) { //se il client era già connesso al server
+
+        req->ACK = *server_isn; // server_isn+1
+        req->initial_n_seq = client_isn; //client_isn +1
+        req->SYN = 0;
+
+        send_request(cmd, token, req, sockfd, servaddr);
+
+        return 1;
+    }
+
+    /* START HANDSHAKE */
 
     req->initial_n_seq = client_isn;
     req->SYN = 1;
@@ -38,53 +54,22 @@ int create_connection(int sockfd, struct sockaddr_in servaddr, char *cmd, char *
 
     if (req->SYN == 1  && req->ACK == (char) client_isn+1 && req->FIN == 0){  // SYNACK
 
-
         u64 client_isn = req->ACK;
+        u64 svr_isn = req->initial_n_seq;
 
-        req->ACK = (char) req->initial_n_seq + 1; // server_isn+1
+        req->ACK = (char) svr_isn+1;
         req->initial_n_seq = client_isn; //client_isn +1
         req->SYN = 0;
 
-        if (strncmp(cmd, "get", 4) == 0) {
-            req->type = GET_REQ;
-            strncpy(req->payload, token, BUFLEN);
-        }
-        if (strncmp(cmd, "put", 4) == 0) {
-            req->type = PUT_REQ;
-            strncpy(req->payload, token, BUFLEN);
-        }
-        if (strncmp(cmd, "list", 5) == 0)
-            req->type = LIST_REQ;
+        send_request(cmd, token, req, sockfd, servaddr);
 
-
-
-        /* Mando 3 volte perché almeno sono quasi sicuro che il server almeno uno
-         * lo riceve!!!
-         *
-         * TODO Mettere un timer di ritrasmissione ACK al posto di queste 3 chiamate
-         * */
-        if (sendto(sockfd, req, sizeof(request_t), 0,
-                   (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
-            perror("errore in sendto");
-            exit(EXIT_FAILURE);
-        }
-        if (sendto(sockfd, req, sizeof(request_t), 0,
-                   (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
-            perror("errore in sendto");
-            exit(EXIT_FAILURE);
-        }if (sendto(sockfd, req, sizeof(request_t), 0,
-                    (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
-            perror("errore in sendto");
-            exit(EXIT_FAILURE);
-        }
-
-        printf("Sent ACK %d \n", req->ACK);
-
-
+        *server_isn = svr_isn+1;
+        *connected = 1;
         return 1;
 
     }else{
         printf("Three way handshake failed.\n");
+        *connected = 0;
         return 0;
     }
 }
@@ -102,6 +87,8 @@ int close_connection(int sockfd, struct sockaddr_in servaddr){
     u64 client_isn = rand() % 100;
     //Invia FIN
 
+    SEND_FIN:
+
     req->initial_n_seq = client_isn;
     req->FIN = 1;
     req->SYN = 0;
@@ -114,27 +101,22 @@ int close_connection(int sockfd, struct sockaddr_in servaddr){
         perror("Errore in sendto: invio del pacchetto request_t");
         exit(EXIT_FAILURE);
     }
-    if (sendto(sockfd, (void *)req, sizeof(request_t), 0, (struct sockaddr *) &servaddr,
-               sizeof(servaddr)) < 0) {
-        free_allocation(req);
-        perror("Errore in sendto: invio del pacchetto request_t");
-        exit(EXIT_FAILURE);
-    }
-    if (sendto(sockfd, (void *)req, sizeof(request_t), 0, (struct sockaddr *) &servaddr,
-               sizeof(servaddr)) < 0) {
-        free_allocation(req);
-        perror("Errore in sendto: invio del pacchetto request_t");
-        exit(EXIT_FAILURE);
-    }
+
     printf("Sent FIN %d, client_isn: %lu\n", req->FIN, req->initial_n_seq);
 
     // Aspetta ACK
+
+    clock_t tspan;
+    tspan = clock();
 
     while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
                     (struct sockaddr *) &servaddr, &slen) < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
             perror("recvfrom() (ricezione del pacchetto request_t)");
             exit(EXIT_FAILURE);
+        }
+        if (clock() - tspan > 1000){
+            goto SEND_FIN;
         }
     }
     printf("Received ACK %d\n",req->ACK);
@@ -171,4 +153,30 @@ int close_connection(int sockfd, struct sockaddr_in servaddr){
 
         return 0;
     }
+}
+
+void send_request(char *cmd, char *token, request_t *req, int sockfd, struct sockaddr_in servaddr){
+
+    printf("Reading cmd.\n");
+
+    if (strncmp(cmd, "get", 4) == 0) {
+        req->type = GET_REQ;
+        strncpy(req->payload, token, BUFLEN);
+    }
+    if (strncmp(cmd, "put", 4) == 0) {
+        req->type = PUT_REQ;
+        strncpy(req->payload, token, BUFLEN);
+    }
+    if (strncmp(cmd, "list", 5) == 0)
+        req->type = LIST_REQ;
+
+
+   if (sendto(sockfd, req, sizeof(request_t), 0,
+                (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
+        perror("errore in sendto");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Sent ACK %d \n", req->ACK);
+
 }

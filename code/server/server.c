@@ -32,9 +32,9 @@ RESET:
 
 
     if (*no_connections < MAX_CONNECTIONS) {
+
         create_service_thread(sockfd, servaddr, no_connections, path, req->initial_n_seq);
         *no_connections += 1;
-        //printf("Creata connessione n. %d\n", *no_connections);
 
     }
 
@@ -50,6 +50,8 @@ static void create_service_thread(int sockfd, struct sockaddr_in servaddr,
     s_thread.no_connections = no_connections;
     s_thread.path = path;
     s_thread.isn = client_isn;
+
+    printf("Ciao sono il client n. %d\n", (char) client_isn);
 
 
     if (pthread_create(&s_thread.tid, NULL, create_connection,

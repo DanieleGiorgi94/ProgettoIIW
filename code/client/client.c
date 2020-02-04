@@ -8,6 +8,8 @@ static void main_task(int sockfd, struct sockaddr_in servaddr) {
     char command[BUFLEN];
     char **token_vector;
     char *cmd, *token;
+    u64 *server_isn = dynamic_allocation(sizeof(u64));
+    char *connected = dynamic_allocation(sizeof(char));
 
     RESET:
     printf(">> ");
@@ -33,17 +35,17 @@ static void main_task(int sockfd, struct sockaddr_in servaddr) {
 
 
     if (strncmp(cmd, "list", 5) == 0) {
-        list_command_handler(cmd, token, sockfd, servaddr);
+        list_command_handler(cmd, token, sockfd, servaddr, connected, server_isn);
         goto RESET;
     }
 
     if (strncmp(cmd, "get", 4) == 0) {
-        get_command_handler(cmd, token, sockfd, servaddr);
+        get_command_handler(cmd, token, sockfd, servaddr, connected, server_isn);
         goto RESET;
     }
 
     if (strncmp(cmd, "put", 4) == 0) {
-        put_command_handler(cmd, token, sockfd, servaddr);
+        put_command_handler(cmd, token, sockfd, servaddr, connected, server_isn);
         goto RESET;
     }
 
@@ -104,12 +106,14 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
+    printf("%d %ud %u", servaddr.sin_family, servaddr.sin_port, servaddr.sin_addr.s_addr);
+
     if (TEST == 0) {
         print_banner(inet_ntoa(servaddr.sin_addr), ntohs(servaddr.sin_port));
         main_task(sockfd, servaddr);
         close(sockfd);
     } else {
-        put_command_handler("put", "divina_commedia.txt", sockfd, servaddr);
+        //put_command_handler("put", "divina_commedia.txt", sockfd, servaddr);
     }
 
     return EXIT_SUCCESS;
