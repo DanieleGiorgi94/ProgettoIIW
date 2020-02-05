@@ -5,4 +5,4 @@
 int create_connection(char *, char *, client_info *, char);
 int close_connection(int, struct sockaddr_in);
 void send_request(char *, char *, client_info *);
-void send_ack(request_t *, client_info *, char, int);
+void send_ack(client_info *, char, int);

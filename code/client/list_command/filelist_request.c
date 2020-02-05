@@ -27,7 +27,7 @@ void list_command_handler(char *cmd, char *token, client_info *c_info)
                 exit(EXIT_FAILURE);
             }
             if (clock() - tspan > 1000){
-                send_ack(req, c_info, svr_isn, sockfd);
+                send_ack(c_info, svr_isn, sockfd);
                 tspan = clock();
             }
         }

@@ -5,7 +5,6 @@ static void create_service_thread(server_info *);
 static int select_available_port(struct available_ports *);
 
 static void main_task(int sockfd, struct sockaddr_in servaddr) {
-    struct sockaddr_in fromAddr;
     char *no_connections = dynamic_allocation(sizeof(*no_connections));
     request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
     struct available_ports *ports =
@@ -19,7 +18,6 @@ static void main_task(int sockfd, struct sockaddr_in servaddr) {
     *no_connections = 0;
 
     srv_info->sockfd = sockfd;
-    srv_info->servaddr = servaddr;
     srv_info->path = path;
     srv_info->no_connections = no_connections;
     srv_info->port_number = PORT + select_available_port(ports);
@@ -28,7 +26,7 @@ RESET:
 
     printf("Waiting SYN...\n");
     while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
-                                (struct sockaddr *) &fromAddr, &slen) < 0) {
+                                (struct sockaddr *) &servaddr, &slen) < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
             perror("recvfrom() failed");
             free(no_connections);
@@ -37,6 +35,8 @@ RESET:
             return;
         }
     }
+    srv_info->servaddr = servaddr;
+
     printf("Received something...\n");
     printf("%d %d %d\n", req->SYN, req->ACK, req->FIN);
     //three-way handshake starts with SYN!

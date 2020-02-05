@@ -36,6 +36,7 @@ void *create_connection(void *arg) {
     }
     printf("Sent SYN-ACK with n_seq=%lu, %d\n", req->initial_n_seq, req->ACK);
 
+
     // Waiting for SOCK_START
     while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
                     (struct sockaddr *) &servaddr, &slen) < 0) {
@@ -44,8 +45,10 @@ void *create_connection(void *arg) {
             exit(EXIT_FAILURE);
         }
     }
-    if ( req->type != SOCK_START )
+    if ( req->type != SOCK_START ) {
+        printf("%d\n", req->type);
         goto SYNACK;
+    }
 
     printf("SOCK_START received.\n");
 

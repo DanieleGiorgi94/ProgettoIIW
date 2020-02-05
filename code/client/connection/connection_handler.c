@@ -35,18 +35,12 @@ int create_connection(char *cmd, char *token, client_info *c_info, char server_i
     }
     printf("Sent SYN with n_seq=%lu\n", req->initial_n_seq);
 
-    clock_t tspan;
-    tspan = clock();
-
     //SYN-ACK (qua riceve la nuova port number)
     while (recvfrom(sockfd, (void *) req, sizeof(request_t),
-            MSG_DONTWAIT, (struct sockaddr *) &servaddr, &slen) < 0) {
+            MSG_DONTWAIT, NULL, NULL) < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
             perror("recvfrom() while waiting SYN-ACK");
             exit(EXIT_FAILURE);
-        }
-        if (clock() - tspan > 10000){
-            goto SYN;
         }
     }
     printf("Received SYN-ACK with ack=%d and nseq=%lu\n", req->ACK,
@@ -74,9 +68,9 @@ int create_connection(char *cmd, char *token, client_info *c_info, char server_i
         c_info->client_isn = client_isn;
         c_info->port_number = new_port;
         c_info->new_sockfd = new_sockfd;
-        c_info->servaddr = servaddr;
         server_isn = svr_isn;
-       send_ack(req, c_info, svr_isn, sockfd);
+
+       send_ack(c_info, svr_isn, sockfd);
 
         return 1;
     } else {
@@ -112,17 +106,18 @@ void send_request(char *cmd, char *token, client_info *c_info)
 }
 
 
-void send_ack(request_t *req, client_info *c_info, char svr_isn, int sockfd) {
+void send_ack(client_info *c_info, char svr_isn, int sockfd) {
 
+    request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
+    req->initial_n_seq = c_info->client_isn;
     req->type = SOCK_START;
     printf("SOCK_START sent.\n");
     struct sockaddr_in servaddr = c_info->servaddr;
 
-
-
-    if (sendto(sockfd, req, sizeof(request_t), 0,
+    if (sendto(sockfd, (void *) req, sizeof(request_t), 0,
                (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
-        perror("errore in sendto");
+        free_allocation(req);
+        perror("sendto() while sending SYN");
         exit(EXIT_FAILURE);
     }
 
