@@ -1,6 +1,6 @@
 #include "../header.h"
 
-void put_command_handler(int sockfd, struct sockaddr_in servaddr,
+/*void put_command_handler(int sockfd, struct sockaddr_in servaddr,
                                                 char *filename, char *path) {
     request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
 
@@ -24,8 +24,8 @@ void put_command_handler(int sockfd, struct sockaddr_in servaddr,
         }
         int fd = open_file(strncat(path, filename, strlen(filename)),
                                                         O_WRONLY | O_CREAT);
-        /* Inizio ricezione file */
-        receive_file(sockfd, (struct sockaddr *) &servaddr, fd);
-        close_file(fd);
-    }
-}
+       */ /* Inizio ricezione file */
+//        receive_file(sockfd, (struct sockaddr *) &servaddr, fd);
+//        close_file(fd);
+//    }
+//}

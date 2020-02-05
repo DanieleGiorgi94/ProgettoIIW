@@ -1,7 +1,7 @@
 #include "../header.h"
 
-void put_command_handler(char *cmd, char *token, int sockfd,
-                         struct sockaddr_in servaddr, char *conn, u64 *server_isn) {
+//void put_command_handler(char *cmd, char *token, int sockfd,
+//                         struct sockaddr_in servaddr, char *conn, u64 *server_isn) {
 //    if (token == NULL) {
 //        fprintf(stderr, "Usage: put <filename.format>\n");
 //    } else {
@@ -51,5 +51,5 @@ void put_command_handler(char *cmd, char *token, int sockfd,
 //        }
 //
 //    }
-}
+//}
 
