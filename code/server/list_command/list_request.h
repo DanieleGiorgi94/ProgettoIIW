@@ -2,4 +2,4 @@
 #error You must not include this sub-header file directly
 #endif
 
-void list_command_handler(int, struct sockaddr_in);
+void list_command_handler(int, struct sockaddr_in, char *path);

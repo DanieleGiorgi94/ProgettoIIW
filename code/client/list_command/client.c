@@ -1,10 +1,10 @@
 #include "header.h"
 
 void print_banner(char *, u32);
-static void main_task(int, struct sockaddr_in);
+static void main_task(client_info *);
 char **tokenize_string(char *, char *);
 
-static void main_task(int sockfd, struct sockaddr_in servaddr) {
+static void main_task(client_info *c_info) {
     char command[BUFLEN];
     char **token_vector;
     char *cmd, *token;
@@ -32,26 +32,23 @@ static void main_task(int sockfd, struct sockaddr_in servaddr) {
     token = token_vector[1];
 
     if (strncmp(cmd, "list", 5) == 0) {
-        list_command_handler(cmd, sockfd, servaddr);
+        list_command_handler(cmd, token, c_info);
         goto RESET;
     }
 
-    if (strncmp(cmd, "get", 4) == 0) {
-        get_command_handler(cmd, token, sockfd, servaddr);
-        goto RESET;
-    }
-
-    if (strncmp(cmd, "put", 4) == 0) {
-        put_command_handler(cmd, token, sockfd, servaddr);
-        goto RESET;
-    }
+//    if (strncmp(cmd, "get", 4) == 0) {
+//        get_command_handler(cmd, token, sockfd, servaddr, connected, server_isn);
+//        goto RESET;
+//    }
+//
+//    if (strncmp(cmd, "put", 4) == 0) {
+//        put_command_handler(cmd, token, sockfd, servaddr, connected, server_isn);
+//        goto RESET;
+//    }
 
     if (strncmp(cmd, "exit", 5) == 0) {
         printf("Processing exit from server...\n");
-        usleep_for(1000000);
-        printf("Bye\n");
-
-        return;
+        exit_command_handler(c_info); //gestione terminazione connessione
     }
 
     if (strncmp(cmd, "list", 5) != 0 && strncmp(cmd, "get", 4) != 0 &&
@@ -86,6 +83,7 @@ void print_banner(char *ip, u32 port) {
 int main(int argc, char **argv) {
     struct sockaddr_in servaddr; //IPv4 address
     int sockfd;
+    client_info *c_info = dynamic_allocation(sizeof(client_info));
 
     if (argc < 2 ) { /* controlla numero degli argomenti */
         fprintf(stderr, "utilizzo: ./client <indirizzo IP server>\n");
@@ -106,12 +104,15 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
+    c_info->sockfd = sockfd;
+    c_info->servaddr = servaddr;
+    c_info->argv = argv[1];
+
     if (TEST == 0) {
         print_banner(inet_ntoa(servaddr.sin_addr), ntohs(servaddr.sin_port));
-        main_task(sockfd, servaddr);
-        close(sockfd);
+        main_task(c_info);
     } else {
-        put_command_handler("put", "divina_commedia.txt", sockfd, servaddr);
+        //put_command_handler("put", "divina_commedia.txt", sockfd, servaddr);
     }
 
     return EXIT_SUCCESS;

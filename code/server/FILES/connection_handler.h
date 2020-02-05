@@ -5,11 +5,10 @@
 #define MAX_CONNECTIONS 10
 
 struct service_thread {
-    int sockfd;
-    struct sockaddr_in servaddr;
-    char *no_connections;
-    char *path;
+    server_info *srv_info;
     pthread_t tid;
 };
 
-void *create_connection(void *);
+struct available_ports {
+    char available[MAX_CONNECTIONS];
+};

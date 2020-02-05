@@ -1,0 +1,170 @@
+#include "../header.h"
+
+int create_connection(u64 *server_isn, client_info *c_info) {
+    int sockfd = c_info->sockfd;
+    struct sockaddr_in servaddr = c_info->servaddr;
+    char connected = c_info->connected;
+
+    /* 3Way Handshake */
+
+    request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
+    u32 slen = sizeof(struct sockaddr);
+
+    srand(time(NULL) + getpid());
+    u64 client_isn = rand() % 100;
+
+    printf("Connected: %d\n", connected);
+
+    if (connected) { //se il client era già connesso al server
+        return 1;
+    }
+
+    /* START HANDSHAKE */
+
+    req->initial_n_seq = client_isn;
+    req->SYN = 1;
+    req->ACK = 0;
+    req->FIN = 0;
+
+    // SYN
+    if (sendto(sockfd, (void *) req, sizeof(request_t), 0,
+            (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
+        free_allocation(req);
+        perror("Errore in sendto: invio del pacchetto request_t");
+        exit(EXIT_FAILURE);
+    }
+    printf("Sent SYN %d, client_isn: %lu\n", req->SYN,
+                                                    req->initial_n_seq);
+
+    while (recvfrom(sockfd, (void *) req, sizeof(request_t),
+            MSG_DONTWAIT, (struct sockaddr *) &servaddr, &slen) < 0) {
+        if (errno != EAGAIN && errno != EWOULDBLOCK) {
+            perror("recvfrom() (ricezione del pacchetto request_t)");
+            exit(EXIT_FAILURE);
+        }
+    }
+    printf("Received SYN-ACK %d %d\n", req->SYN, req->ACK);
+
+    c_info->port_number = req->port_number;
+
+    if (req->SYN == 1 && req->ACK == (char) client_isn + 1 &&
+                                                        req->FIN == 0) {
+        u64 client_isn = req->ACK;
+        u64 svr_isn = req->initial_n_seq;
+
+        req->ACK = (char) svr_isn + 1;
+        req->initial_n_seq = client_isn; //client_isn + 1
+        req->SYN = 0;
+
+        printf("Sending ACK %d %lu\n", req->ACK, req->initial_n_seq);
+
+        if (sendto(sockfd, (void *) req, sizeof(request_t), 0,
+                (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
+            free_allocation(req);
+            perror("Errore in sendto: invio del pacchetto request_t");
+            exit(EXIT_FAILURE);
+        }
+
+        *server_isn = svr_isn + 1;
+        c_info->connected = 1;
+        return 1;
+    } else {
+        printf("Three way handshake failed.\n");
+        c_info->connected = 0;
+        return 0;
+    }
+}
+int close_connection(int sockfd, struct sockaddr_in servaddr) {
+
+    //TODO Potremmo anche pensare di poter ricevere una chiusura (Es: gestione
+    // sigquit) mentre si stanno facendo operazioni di read/write. In tal caso
+    // dovremmo segnalare anche un END_OF_FILE ai due processi!
+
+    request_t *req = (request_t *)
+                                dynamic_allocation(sizeof(request_t));
+    request_t *fin_req = (request_t *) dynamic_allocation(sizeof(request_t));
+    u32 slen = sizeof(struct sockaddr);
+
+    srand(time(NULL));
+    u64 client_isn = rand() % 100;
+    //Invia FIN
+
+    SEND_FIN:
+    fin_req->initial_n_seq = client_isn;
+    fin_req->type = EXIT_REQ;
+
+    if (sendto(sockfd, (void *) fin_req, sizeof(request_t), 0,
+            (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
+        free_allocation(req);
+        perror("Errore in sendto: invio del pacchetto request_t");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Sent FIN, client_isn: %lu\n", fin_req->initial_n_seq);
+
+    // Aspetta ACK
+    clock_t tspan;
+    tspan = clock();
+
+    while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
+                    (struct sockaddr *) &servaddr, &slen) < 0) {
+        if (errno != EAGAIN && errno != EWOULDBLOCK) {
+            perror("recvfrom() (ricezione del pacchetto request_t)");
+            exit(EXIT_FAILURE);
+        }
+        if (clock() - tspan > 1000){
+            goto SEND_FIN;
+        }
+    }
+    printf("Received ACK %d\n",req->ACK);
+
+    if (req->ACK == 2){
+        // Aspetta FIN del server
+        while (recvfrom(sockfd, (void *) req, sizeof(request_t),
+                MSG_DONTWAIT, (struct sockaddr *) &servaddr, &slen) < 0) {
+            if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                perror("recvfrom() (ricezione del pacchetto request_t)");
+                exit(EXIT_FAILURE);
+            }
+        }
+        if (req->FIN){
+            // invia ACK
+            req->initial_n_seq = client_isn+1;
+            if (sendto(sockfd, (void *)req, sizeof(request_t), 0,
+                    (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
+                free_allocation(req);
+                perror("Errore in sendto: invio del pacchetto request_t");
+                exit(EXIT_FAILURE);
+            }
+            printf("Sent ACK %d\n", req->ACK);
+            return 1;
+        } else {
+            printf("FIN from server not received.\n");
+            return 0;
+        }
+    } else {
+        printf("ACK not correctly received.\n");
+        return 0;
+    }
+}
+void send_request(char *cmd, char *token, request_t *req, client_info *c_info) {
+    int sockfd = c_info->new_sockfd;
+    struct sockaddr_in servaddr = c_info->servaddr;
+
+    if (strncmp(cmd, "get", 4) == 0) {
+        req->type = GET_REQ;
+        strncpy(req->payload, token, BUFLEN);
+    }
+    if (strncmp(cmd, "put", 4) == 0) {
+        req->type = PUT_REQ;
+        strncpy(req->payload, token, BUFLEN);
+    }
+    if (strncmp(cmd, "list", 5) == 0)
+        req->type = LIST_REQ;
+
+   if (sendto(sockfd, req, sizeof(request_t), 0,
+                (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
+        perror("errore in sendto");
+        exit(EXIT_FAILURE);
+   }
+}
