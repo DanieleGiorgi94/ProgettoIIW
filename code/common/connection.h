@@ -2,12 +2,14 @@
 #error You must not include this sub-header file directly
 #endif
 
-#define GET_REQ 0
-#define PUT_REQ 1
-#define LIST_REQ 2
-#define FILEON 3
-#define FILEOFF 4
-#define EXIT_REQ 5
+#define GET_REQ 1
+#define PUT_REQ 2
+#define LIST_REQ 3
+#define FILEON 4
+#define FILEOFF 5
+#define EXIT_REQ 6
+#define SOCK_START 7
+
 
 typedef struct {
     u64 initial_n_seq;
@@ -15,7 +17,7 @@ typedef struct {
     char ACK;
     char FIN;
     char payload[BUFLEN];
-    char type; //GET_REQ, PUT_REQ, LIST_REQ, FILEON, FILEOFF, EXIT_REQ, C_START
+    char type; //GET_REQ, PUT_REQ, LIST_REQ, FILEON, FILEOFF, EXIT_REQ, SOCK_START
     u64 port_number;
 } request_t;
 
@@ -26,6 +28,7 @@ typedef struct {
     char *argv;
     char connected;
     u64 port_number;
+    char client_isn;
 } client_info;
 
 typedef struct {

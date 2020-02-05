@@ -90,6 +90,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
+    /* Creazione prima socket per handshake */
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         perror("socket() failed");
         exit(EXIT_FAILURE);

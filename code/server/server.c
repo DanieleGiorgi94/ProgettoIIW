@@ -5,6 +5,7 @@ static void create_service_thread(server_info *);
 static int select_available_port(struct available_ports *);
 
 static void main_task(int sockfd, struct sockaddr_in servaddr) {
+    struct sockaddr_in fromAddr;
     char *no_connections = dynamic_allocation(sizeof(*no_connections));
     request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
     struct available_ports *ports =
@@ -24,10 +25,10 @@ static void main_task(int sockfd, struct sockaddr_in servaddr) {
     srv_info->port_number = PORT + select_available_port(ports);
 
 RESET:
-    /* Waiting for C_START from a client to start communication */
+
     printf("Waiting SYN...\n");
     while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
-                                (struct sockaddr *) &servaddr, &slen) < 0) {
+                                (struct sockaddr *) &fromAddr, &slen) < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
             perror("recvfrom() failed");
             free(no_connections);
@@ -37,9 +38,13 @@ RESET:
         }
     }
     printf("Received something...\n");
+    printf("%d %d %d\n", req->SYN, req->ACK, req->FIN);
     //three-way handshake starts with SYN!
-    if (req->SYN != 1 && req->ACK != 0 && req->FIN != 0)
+    if (req->SYN != 1 || req->ACK != 0 || req->FIN != 0){
+        printf("Was not a SYN...\n");
+        usleep_for(1);
         goto RESET;
+    }
     printf("It's a SYN request!\n");
 
     if (*no_connections < MAX_CONNECTIONS) {
@@ -53,6 +58,7 @@ RESET:
             exit(EXIT_FAILURE);
         }
 
+        printf("nseq: %lu\n", req->initial_n_seq);
         memset((void *) &servaddr, 0, sizeof(servaddr));
         servaddr.sin_family = AF_INET;
         servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -64,10 +70,14 @@ RESET:
         }
         printf("New sockfd created, port=%lu\n", new_port_number);
 
+        srv_info->client_isn = req->initial_n_seq;
         create_service_thread(srv_info);
         *no_connections += 1;
+    }else{
+        printf("Server is now full. Please try again later.\n");
+        goto RESET;
     }
-
+    printf("Connection n. %d created!\n", *no_connections);
     goto RESET;
 }
 static void create_service_thread(server_info *srv_info)
