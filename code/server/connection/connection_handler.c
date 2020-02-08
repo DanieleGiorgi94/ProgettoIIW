@@ -60,8 +60,10 @@ void *create_connection(void *arg) {
      */
 
     //ACK (attesa sulla nuova socket)
+
+
     while (recvfrom(new_sockfd, (void *) req, sizeof(request_t),
-                    MSG_DONTWAIT, (struct sockaddr *) &servaddr, &slen) < 0) {
+                    0, (struct sockaddr *) &srv_info->cliaddr, &slen) < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
             perror("recvfrom() failed");
             release_resources(req, no_connections, sockfd);
@@ -70,14 +72,20 @@ void *create_connection(void *arg) {
     }
     printf("Received ACK with n_seq=%lu\n", req->initial_n_seq);
 
-    if (req->SYN == 0 && req->ACK == server_isn + 1) {
-        printf("SI\n");
-        release_resources(req, no_connections, sockfd);
-        return NULL;
+    if ( (req->SYN == 0 && req->ACK == server_isn + 1)
+        || req->FIN > 0 ) {
+        printf(" ******* 3Way Handshake completed ******** \n");
+        //release_resources(req, no_connections, sockfd);
+        //return NULL;
+            list_command_handler(new_sockfd, srv_info->cliaddr, srv_info->path);
+            free_allocation(req);
+            return NULL;
+
     } else {
         release_resources(req, no_connections, sockfd);
         return NULL;
     }
+    return NULL;
 }
 
 static void release_resources(request_t *req, char *no_connections, int sockfd)

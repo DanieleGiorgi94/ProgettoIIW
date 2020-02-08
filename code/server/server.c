@@ -14,6 +14,7 @@ static void main_task(int sockfd, struct sockaddr_in servaddr) {
 
     char *path = obtain_path(NULL, NULL, 1);
     u32 slen = sizeof(struct sockaddr);
+    struct sockaddr_in cliaddr;
 
     *no_connections = 0;
 
@@ -24,8 +25,8 @@ static void main_task(int sockfd, struct sockaddr_in servaddr) {
 
 RESET:
 
-    printf("Waiting SYN...\n");
-    while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
+    //printf("Waiting SYN...\n");
+    while (recvfrom(sockfd, (void *) req, sizeof(request_t), 0,
                                 (struct sockaddr *) &servaddr, &slen) < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
             perror("recvfrom() failed");
@@ -37,15 +38,14 @@ RESET:
     }
     srv_info->servaddr = servaddr;
 
-    printf("Received something...\n");
-    printf("%d %d %d\n", req->SYN, req->ACK, req->FIN);
+
     //three-way handshake starts with SYN!
     if (req->SYN != 1 || req->ACK != 0 || req->FIN != 0){
-        printf("Was not a SYN...\n");
+        //printf("Was not a SYN...\n");
         usleep_for(1);
         goto RESET;
     }
-    printf("It's a SYN request!\n");
+    //printf("It's a SYN request!\n");
 
     if (*no_connections < MAX_CONNECTIONS) {
 
@@ -59,20 +59,24 @@ RESET:
         }
 
         printf("nseq: %lu\n", req->initial_n_seq);
-        memset((void *) &servaddr, 0, sizeof(servaddr));
-        servaddr.sin_family = AF_INET;
-        servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-        servaddr.sin_port = htons(new_port_number);
-        if (bind(new_sockfd, (struct sockaddr *) &servaddr,
-                                                    sizeof(servaddr)) < 0) {
+        memset((void *) &cliaddr, 0, sizeof(cliaddr));
+        cliaddr.sin_family = AF_INET;
+        cliaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+        cliaddr.sin_port = htons(new_port_number);
+        if (bind(new_sockfd, (struct sockaddr *) &cliaddr, sizeof(cliaddr)) < 0) {
             perror("errore in bind");
             exit(EXIT_FAILURE);
         }
-        printf("New sockfd created, port=%lu\n", new_port_number);
+
+        printf("New sockfd created, port=%lu\n",new_port_number);
 
         srv_info->client_isn = req->initial_n_seq;
+        srv_info->cliaddr = cliaddr;
+        srv_info->new_sockfd = new_sockfd;
         create_service_thread(srv_info);
         *no_connections += 1;
+
+
     }else{
         printf("Server is now full. Please try again later.\n");
         goto RESET;

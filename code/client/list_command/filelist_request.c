@@ -16,9 +16,9 @@ void list_command_handler(char *cmd, char *token, client_info *c_info)
         printf("connessione stabilita\n");
         request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
 
-        send_request(cmd, token, c_info);
         clock_t tspan;
         tspan = clock();
+        send_request(cmd, token, c_info);
 
         while (recvfrom(c_info->new_sockfd, (void *) req, sizeof(request_t),
                 MSG_DONTWAIT, (struct sockaddr *) &servaddr, &slen) < 0) {
@@ -26,11 +26,16 @@ void list_command_handler(char *cmd, char *token, client_info *c_info)
                 perror("recvfrom() (ricezione del pacchetto request_t)");
                 exit(EXIT_FAILURE);
             }
-            if (clock() - tspan > 1000){
+            /*if (clock() - tspan > 1000){
                 send_ack(c_info, svr_isn, sockfd);
                 tspan = clock();
-            }
+            }*/
         }
+
+        //tspan = clock();
+
+
+
 
         //Se la lista dei file non è vuota
         if (strlen(req->payload)) {

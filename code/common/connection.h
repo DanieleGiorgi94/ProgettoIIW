@@ -25,6 +25,7 @@ typedef struct {
     int sockfd;
     int new_sockfd;
     struct sockaddr_in servaddr;
+    struct sockaddr_in cliaddr;
     char *argv;
     char connected;
     u64 port_number;
@@ -35,6 +36,7 @@ typedef struct {
     int sockfd;
     int new_sockfd;
     struct sockaddr_in servaddr;
+    struct sockaddr_in cliaddr;
     char *path;
     u64 port_number;
     char *no_connections;

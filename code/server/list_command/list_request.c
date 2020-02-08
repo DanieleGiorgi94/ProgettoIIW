@@ -3,7 +3,7 @@
 /*
     Invia il filelist ad un client
 */
-void list_command_handler(int sockfd, struct sockaddr_in servaddr, char *path) {
+void list_command_handler(int sockfd, struct sockaddr_in cliaddr, char *path) {
 
     request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
     srand(time(NULL) + getpid());
@@ -15,7 +15,7 @@ void list_command_handler(int sockfd, struct sockaddr_in servaddr, char *path) {
 
     printf("Invio lista dei miei file a client.\n");
     if (sendto(sockfd, (void *) req, sizeof(request_t), 0,
-            (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
+            (struct sockaddr *) &cliaddr, sizeof(cliaddr)) < 0) {
         free_allocation(req);
         perror("Errore in sendto: invio del pacchetto twh_request_t");
         exit(EXIT_FAILURE);
