@@ -3,7 +3,7 @@
 
 #define TEST 0
 
-#include "../common/posix_library/reliable_udp.h"
+#include "../common/reliable_udp.h"
 #include "list_command/list_request.h"
 #include "get_command/get_request.h"
 #include "put_command/put_request.h"

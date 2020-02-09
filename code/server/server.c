@@ -4,7 +4,8 @@ static void main_task(int, struct sockaddr_in);
 static void create_service_thread(server_info *);
 static int select_available_port(struct available_ports *);
 
-static void main_task(int sockfd, struct sockaddr_in servaddr) {
+static void main_task(int sockfd, struct sockaddr_in servaddr)
+{
     char *no_connections = dynamic_allocation(sizeof(*no_connections));
     request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
     struct available_ports *ports =
@@ -21,7 +22,7 @@ static void main_task(int sockfd, struct sockaddr_in servaddr) {
     srv_info->sockfd = sockfd;
     srv_info->path = path;
     srv_info->no_connections = no_connections;
-    srv_info->port_number = PORT + select_available_port(ports);
+    srv_info->ports = ports;
 
 RESET:
 
@@ -38,9 +39,8 @@ RESET:
     }
     srv_info->servaddr = servaddr;
 
-
     //three-way handshake starts with SYN!
-    if (req->SYN != 1 || req->ACK != 0 || req->FIN != 0){
+    if (req->SYN != 1 || req->ACK != 0 || req->FIN != 0) {
         //printf("Was not a SYN...\n");
         usleep_for(1);
         goto RESET;
@@ -48,37 +48,46 @@ RESET:
     //printf("It's a SYN request!\n");
 
     if (*no_connections < MAX_CONNECTIONS) {
-
         //creating new socket for the new client
-        u64 new_port_number = PORT + select_available_port(ports);
+        int index = select_available_port(ports);
+        u64 new_port_number = PORT + index;
         int new_sockfd;
+
+        for (int j = 0; j < MAX_CONNECTIONS; j++) {
+            printf("%d ", ports->available[j]);
+        }
+        printf("\n");
+        printf("%d\n", index);
         
         if ((new_sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
             perror("socket() failed");
             exit(EXIT_FAILURE);
         }
 
-        printf("nseq: %lu\n", req->initial_n_seq);
+        //printf("nseq: %lu\n", req->initial_n_seq);
         memset((void *) &cliaddr, 0, sizeof(cliaddr));
         cliaddr.sin_family = AF_INET;
         cliaddr.sin_addr.s_addr = htonl(INADDR_ANY);
         cliaddr.sin_port = htons(new_port_number);
-        if (bind(new_sockfd, (struct sockaddr *) &cliaddr, sizeof(cliaddr)) < 0) {
+        if (bind(new_sockfd, (struct sockaddr *) &cliaddr,
+                                    sizeof(cliaddr)) < 0) {
             perror("errore in bind");
             exit(EXIT_FAILURE);
         }
 
-        printf("New sockfd created, port=%lu\n",new_port_number);
+        printf("New sockfd created, port=%lu\n", new_port_number);
 
+        //creating new thread
         srv_info->client_isn = req->initial_n_seq;
         srv_info->cliaddr = cliaddr;
         srv_info->new_sockfd = new_sockfd;
+        srv_info->port_number = new_port_number;
         create_service_thread(srv_info);
+
         *no_connections += 1;
-
-
-    }else{
-        printf("Server is now full. Please try again later.\n");
+        ports->available[index - 1] = 1;
+    } else {
+        printf("Server is now full.\n");
         goto RESET;
     }
     printf("Connection n. %d created!\n", *no_connections);
@@ -89,9 +98,6 @@ static void create_service_thread(server_info *srv_info)
     struct service_thread s_thread;
 
     s_thread.srv_info = srv_info;
-
-    printf("creating thread...\n");
-
     if (pthread_create(&s_thread.tid, NULL, create_connection,
                                                 &s_thread) != 0) {
         perror("pthread_create() failed");

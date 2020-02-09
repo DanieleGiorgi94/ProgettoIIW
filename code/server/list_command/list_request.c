@@ -1,10 +1,7 @@
 #include "../header.h"
 
-/*
-    Invia il filelist ad un client
-*/
-void list_command_handler(int sockfd, struct sockaddr_in cliaddr, char *path) {
-
+void list_command_handler(int sockfd, struct sockaddr_in cliaddr, char *path)
+{
     request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
     srand(time(NULL) + getpid());
     u64 server_isn = rand() % 100;
@@ -20,5 +17,5 @@ void list_command_handler(int sockfd, struct sockaddr_in cliaddr, char *path) {
         perror("Errore in sendto: invio del pacchetto twh_request_t");
         exit(EXIT_FAILURE);
     }
-    return;
+    printf("Sent list\n");
 }

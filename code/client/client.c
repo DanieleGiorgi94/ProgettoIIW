@@ -1,13 +1,15 @@
 #include "header.h"
 
-void print_banner(char *, u32);
+static void print_banner(char *, u32);
 static void main_task(client_info *);
-char **tokenize_string(char *, char *);
+static void create_service_thread(char *, char *, client_info *, char);
+static char **tokenize_string(char *, char *);
+static void fill_array(char *, char *, int);
 
 static void main_task(client_info *c_info) {
     char command[BUFLEN];
     char **token_vector;
-    char *cmd, *token;
+    char cmd[MAX_CMD_LENGTH], token[BUFLEN - MAX_CMD_LENGTH];
 
     RESET:
     printf(">> ");
@@ -28,23 +30,24 @@ static void main_task(client_info *c_info) {
     }
 
     token_vector = tokenize_string(command, " ");
-    cmd = token_vector[0];
-    token = token_vector[1];
+    fill_array(cmd, token_vector[0], MAX_CMD_LENGTH);
 
     if (strncmp(cmd, "list", 5) == 0) {
-        list_command_handler(cmd, token, c_info);
+        create_service_thread(cmd, token, c_info, LIST_REQ);
         goto RESET;
     }
 
-//    if (strncmp(cmd, "get", 4) == 0) {
-//        get_command_handler(cmd, token, sockfd, servaddr, connected, server_isn);
-//        goto RESET;
-//    }
-//
-//    if (strncmp(cmd, "put", 4) == 0) {
-//        put_command_handler(cmd, token, sockfd, servaddr, connected, server_isn);
-//        goto RESET;
-//    }
+    if (strncmp(cmd, "get", 4) == 0) {
+        fill_array(token, token_vector[1], BUFLEN - MAX_CMD_LENGTH);
+        create_service_thread(cmd, token, c_info, GET_REQ);
+        goto RESET;
+    }
+
+    if (strncmp(cmd, "put", 4) == 0) {
+        fill_array(token, token_vector[1], BUFLEN - MAX_CMD_LENGTH);
+        create_service_thread(cmd, token, c_info, PUT_REQ);
+        goto RESET;
+    }
 
     if (strncmp(cmd, "exit", 5) == 0) {
         printf("Processing exit from server...\n");
@@ -57,19 +60,58 @@ static void main_task(client_info *c_info) {
         goto RESET;
     }
 }
-char **tokenize_string(char *buffer, char *delimiter) {
+static void create_service_thread(char *cmd, char *token, client_info *c_info,
+        char type) {
+    struct service_thread s_thread;
+
+    //printf("creating new thread\n");
+
+    void *(*function_pointer)(void *);
+    if (type == LIST_REQ)
+        function_pointer = list_command_handler;
+    else if (type == GET_REQ)
+        function_pointer = get_command_handler;
+    else if (type == PUT_REQ)
+        function_pointer = put_command_handler;
+    else
+        return;
+
+    s_thread.c_info = c_info;
+    strncpy(s_thread.cmd, cmd, MAX_CMD_LENGTH);
+    strncpy(s_thread.token, token, BUFLEN - MAX_CMD_LENGTH);
+
+    if (pthread_create(&s_thread.tid, NULL, function_pointer,
+            &s_thread) != 0) {
+        perror("pthread_create() failed");
+    }
+}
+static void fill_array(char *out_array, char *in_array, int length)
+{
     int i = 0;
-    char **token_vector = dynamic_allocation(BUFLEN * sizeof(char *));
+    for (i = 0; i < length; i++) {
+        out_array[i] = 0;
+    }
+    for (i = 0; i < length; i++) {
+        if (in_array[i] == 0 || in_array[i] == ' ' || in_array[i] == '\n')
+            break;
+        out_array[i] = in_array[i];
+    }
+}
+static char **tokenize_string(char *buffer, char *delimiter) {
+    int i = 0;
+    //TODO: secondo me qua potremmo allocare 2 * sizeof(char *)
+    //char **token_vector = dynamic_allocation(BUFLEN * sizeof(char *));
+    char **token_vector = dynamic_allocation(2 * sizeof(char *));
 
     token_vector[i] = strtok(buffer, delimiter);
-    while(token_vector[i]!= NULL) {
+    while (token_vector[i] != NULL) {
         i++;
         token_vector[i] = strtok(NULL, delimiter);
     }
 
     return token_vector;
 }
-void print_banner(char *ip, u32 port) {
+static void print_banner(char *ip, u32 port) {
     printf(WELCOME_STRING, ip, port);
     printf("\n"SPACER);
     printf(FIRST_LINE);

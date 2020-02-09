@@ -10,7 +10,6 @@
 #define EXIT_REQ 6
 #define SOCK_START 7
 
-
 typedef struct {
     u64 initial_n_seq;
     char SYN;
@@ -41,4 +40,5 @@ typedef struct {
     u64 port_number;
     char *no_connections;
     char client_isn;
+    struct available_ports *ports;
 } server_info;

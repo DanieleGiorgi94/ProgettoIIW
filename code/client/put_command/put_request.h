@@ -2,5 +2,4 @@
 #error You must not include this sub-header file directly
 #endif
 
-void put_command_handler(char, char, int,
-        struct sockaddr_in, char, u64 *);
+void *put_command_handler(void *);

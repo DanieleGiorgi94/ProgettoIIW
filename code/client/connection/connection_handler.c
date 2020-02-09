@@ -1,20 +1,18 @@
 #include "../header.h"
 
-int create_connection(char *cmd, char *token, client_info *c_info, char server_isn)
+int create_connection(client_info *c_info)
 {
     int sockfd = c_info->sockfd;
     int new_port;
     int new_sockfd;
     struct sockaddr_in servaddr = c_info->servaddr;
     struct sockaddr_in cliaddr;
-
     char *argv = c_info->argv;
 
     srand(time(NULL) + getpid());
 
     // Three-way handshake
     request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
-    u32 slen = sizeof(struct sockaddr);
 
     char client_isn = rand() % 100;
     char svr_isn;
@@ -25,16 +23,15 @@ int create_connection(char *cmd, char *token, client_info *c_info, char server_i
     req->ACK = 0;
     req->FIN = 0;
 
-    printf("Created new client_isn: %d\n", client_isn);
+    //printf("Created new client_isn: %d\n", client_isn);
 
-    SYN:
     if (sendto(sockfd, (void *) req, sizeof(request_t), 0,
             (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
         free_allocation(req);
         perror("sendto() while sending SYN");
         exit(EXIT_FAILURE);
     }
-    printf("Sent SYN with n_seq=%lu\n", req->initial_n_seq);
+    //printf("Sent SYN with n_seq=%lu\n", req->initial_n_seq);
 
     //SYN-ACK (qua riceve la nuova port number)
     while (recvfrom(sockfd, (void *) req, sizeof(request_t),
@@ -44,8 +41,8 @@ int create_connection(char *cmd, char *token, client_info *c_info, char server_i
             exit(EXIT_FAILURE);
         }
     }
-    printf("Received SYN-ACK with ack=%d and nseq=%lu\n", req->ACK,
-                                                        req->initial_n_seq);
+    //printf("Received SYN-ACK with ack=%d and nseq=%lu\n", req->ACK,
+    //                                                    req->initial_n_seq);
 
     if (req->SYN == 1 && req->ACK == client_isn + 1 && req->FIN == 0) {
 
@@ -71,16 +68,14 @@ int create_connection(char *cmd, char *token, client_info *c_info, char server_i
         c_info->cliaddr = cliaddr;
         c_info->port_number = new_port;
         c_info->new_sockfd = new_sockfd;
-        server_isn = svr_isn;
 
-       send_ack(c_info, svr_isn, sockfd);
+        send_ack(c_info, svr_isn, sockfd);
 
         return 1;
     } else {
         return 0;
     }
 }
-
 int close_connection(int sockfd, struct sockaddr_in servaddr)
 {
     return 0;
@@ -102,22 +97,22 @@ void send_request(char *cmd, char *token, client_info *c_info)
     if (strncmp(cmd, "list", 5) == 0)
         req->type = LIST_REQ;
 
-    if (sendto(c_info->new_sockfd, req, sizeof(request_t), 0,
-               (struct sockaddr *) &cliaddr, sizeof(cliaddr)) < 0) {
+    if (sendto(sockfd, req, sizeof(request_t), 0, (struct sockaddr *) &cliaddr,
+            sizeof(cliaddr)) < 0) {
         perror("errore in sendto");
         exit(EXIT_FAILURE);
     }
+    //printf("Sent request\n");
+    free_allocation(req);
 }
-
-
-void send_ack(client_info *c_info, char svr_isn, int sockfd) {
+void send_ack(client_info *c_info, char svr_isn, int sockfd)
+{
+    struct sockaddr_in servaddr = c_info->servaddr;
+    struct sockaddr_in cliaddr = c_info->cliaddr;
 
     request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
     req->initial_n_seq = c_info->client_isn;
     req->type = SOCK_START;
-    printf("SOCK_START sent.\n");
-    struct sockaddr_in servaddr = c_info->servaddr;
-    struct sockaddr_in cliaddr = c_info->cliaddr;
 
     if (sendto(sockfd, (void *) req, sizeof(request_t), 0,
                (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
@@ -125,8 +120,9 @@ void send_ack(client_info *c_info, char svr_isn, int sockfd) {
         perror("sendto() while sending SYN");
         exit(EXIT_FAILURE);
     }
+    //printf("SOCK_START sent.\n");
 
-//ACK (sulla nuova socket)
+    //ACK (sulla nuova socket)
     free_allocation(req);
     req = (request_t *) dynamic_allocation(sizeof(request_t));
 
@@ -140,5 +136,5 @@ void send_ack(client_info *c_info, char svr_isn, int sockfd) {
         perror("errore in sendto");
         exit(EXIT_FAILURE);
     }
-    printf("Sent ACK with n_seq=%lu\n", req->initial_n_seq);
+    //printf("Sent ACK with n_seq=%lu\n", req->initial_n_seq);
 }

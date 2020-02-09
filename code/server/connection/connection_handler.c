@@ -1,6 +1,6 @@
 #include "../header.h"
 
-static void release_resources(request_t *, char *, int);
+static void release_resources(request_t *, server_info *);
 
 void *create_connection(void *arg) {
     struct service_thread *ptd = (struct service_thread *) arg;
@@ -9,7 +9,6 @@ void *create_connection(void *arg) {
     int sockfd = srv_info->sockfd;
     int new_sockfd = srv_info->new_sockfd;
     struct sockaddr_in servaddr = srv_info->servaddr;
-    char *no_connections = srv_info->no_connections;
     char client_isn = srv_info->client_isn;
 
     srand(time(NULL) + getpid());
@@ -17,7 +16,6 @@ void *create_connection(void *arg) {
     request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
     char server_isn = rand() % 100;
     u32 slen = sizeof(struct sockaddr);
-
 
     SYNACK:
 
@@ -30,27 +28,26 @@ void *create_connection(void *arg) {
 
     if (sendto(sockfd, (void *) req, sizeof(request_t), 0,
                (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
-        release_resources(req, no_connections, sockfd);
-        perror("Errore in sendto: invio del pacchetto twh_request_t");
+        release_resources(req, srv_info);
+        perror("Errore in sendto");
         exit(EXIT_FAILURE);
     }
-    printf("Sent SYN-ACK with n_seq=%lu, %d\n", req->initial_n_seq, req->ACK);
-
+    //printf("Sent SYN-ACK with n_seq=%lu, %d\n", req->initial_n_seq, req->ACK);
 
     // Waiting for SOCK_START
     while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
                     (struct sockaddr *) &servaddr, &slen) < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
-            perror("recvfrom() (ricezione del pacchetto request_t)");
+            perror("recvfrom()");
             exit(EXIT_FAILURE);
         }
     }
-    if ( req->type != SOCK_START ) {
-        printf("%d\n", req->type);
+    if (req->type != SOCK_START) {
+        //printf("%d\n", req->type);
         goto SYNACK;
     }
 
-    printf("SOCK_START received.\n");
+    //printf("SOCK_START received.\n");
 
     /* Qua ho fatto in modo che ascolto solo se è stata effettivamente
      * creata la socket nel client. Dovremmo fare una recvfrom
@@ -60,37 +57,50 @@ void *create_connection(void *arg) {
      */
 
     //ACK (attesa sulla nuova socket)
-
-
-    while (recvfrom(new_sockfd, (void *) req, sizeof(request_t),
-                    0, (struct sockaddr *) &srv_info->cliaddr, &slen) < 0) {
+    while (recvfrom(new_sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
+            (struct sockaddr *) &srv_info->cliaddr, &slen) < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
             perror("recvfrom() failed");
-            release_resources(req, no_connections, sockfd);
+            release_resources(req, srv_info);
             return NULL;
         }
     }
-    printf("Received ACK with n_seq=%lu\n", req->initial_n_seq);
+    //printf("Received ACK with n_seq=%lu\n", req->initial_n_seq);
 
-    if ( (req->SYN == 0 && req->ACK == server_isn + 1)
-        || req->FIN > 0 ) {
-        printf(" ******* 3Way Handshake completed ******** \n");
-        //release_resources(req, no_connections, sockfd);
-        //return NULL;
+    if ((req->SYN == 0 && req->ACK == server_isn + 1) || req->FIN > 0) {
+        //printf(" ******* 3Way Handshake completed ******** \n");
+        while (recvfrom(new_sockfd, (void *) req, sizeof(request_t),
+                MSG_DONTWAIT, (struct sockaddr *) &srv_info->cliaddr, &slen)
+                                                                        < 0) {
+            if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                perror("recvfrom() failed");
+                release_resources(req, srv_info);
+                return NULL;
+            }
+        }
+        printf("Received request: ");
+        printf("%s\n", req->payload);
+        if (req->type == LIST_REQ)
             list_command_handler(new_sockfd, srv_info->cliaddr, srv_info->path);
-            free_allocation(req);
-            return NULL;
-
+        else if (req->type == GET_REQ)
+            get_command_handler(new_sockfd, srv_info->cliaddr, req->payload,
+                srv_info->path);
+        else if (req->type == PUT_REQ)
+            put_command_handler(new_sockfd, srv_info->cliaddr, req->payload,
+                srv_info->path);
+        release_resources(req, srv_info);
+        return NULL;
     } else {
-        release_resources(req, no_connections, sockfd);
+        release_resources(req, srv_info);
         return NULL;
     }
     return NULL;
 }
 
-static void release_resources(request_t *req, char *no_connections, int sockfd)
+static void release_resources(request_t *req, server_info *srv_info)
 {
     free(req);
-    *no_connections -= 1;
-    close(sockfd);
+    *(srv_info->no_connections) -= 1;
+    close(srv_info->new_sockfd);
+    srv_info->ports->available[srv_info->port_number - PORT - 1] = 0;
 }
