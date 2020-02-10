@@ -4,6 +4,7 @@
 #define TEST 0
 
 #include "../common/reliable_udp.h"
+#include "utilities/utilities.h"
 #include "list_command/filelist_request.h"
 #include "get_command/get_request.h"
 #include "put_command/put_request.h"

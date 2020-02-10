@@ -8,6 +8,7 @@ PUTC=$(shell ls put_command/*.c)
 GETC=$(shell ls get_command/*.c)
 EXITC=$(shell ls exit_command/*.c)
 CONNC=$(shell ls connection/*.c)
+UTILC=$(shell ls utilities/*.c)
 PROGS=$(CFILES:%.c=%)
 
 # NOME: PREREQUISITO
@@ -15,7 +16,7 @@ PROGS=$(CFILES:%.c=%)
 
 all: $(PROGS)
 
-%: %.c $(LIBCFILES) $(COMMCFILES) $(LISTC) $(PUTC) $(GETC) $(CONNC) $(EXITC)
+%: %.c $(LIBCFILES) $(COMMCFILES) $(LISTC) $(PUTC) $(GETC) $(CONNC) $(EXITC) $(UTILC)
 	$(CC) $(CFLAGS) -o $@ $^ 
 
 clean:

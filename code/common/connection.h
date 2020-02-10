@@ -19,26 +19,3 @@ typedef struct {
     char type; //GET_REQ, PUT_REQ, LIST_REQ, FILEON, FILEOFF, EXIT_REQ, SOCK_START
     u64 port_number;
 } request_t;
-
-typedef struct {
-    int sockfd;
-    int new_sockfd;
-    struct sockaddr_in servaddr;
-    struct sockaddr_in cliaddr;
-    char *argv;
-    char connected;
-    u64 port_number;
-    char client_isn;
-} client_info;
-
-typedef struct {
-    int sockfd;
-    int new_sockfd;
-    struct sockaddr_in servaddr;
-    struct sockaddr_in cliaddr;
-    char *path;
-    u64 port_number;
-    char *no_connections;
-    char client_isn;
-    struct available_ports *ports;
-} server_info;
