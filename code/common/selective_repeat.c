@@ -12,14 +12,13 @@ static void send_pkt(int, pkt_t *, const struct sockaddr *);
 static char sym_lost_pkt(void);
 static void *timeout_handler(void *);
 static pkt_t create_pkt(int, u64);
-static unsigned long estimateTimeout(unsigned long *, unsigned long *, unsigned long);
-
 
 static void *merge_file(void *);
 static void *receiver(void *);
 static void send_ack(int, struct sockaddr, u64, char type);
 static char sorted_buf_insertion(struct circular_buffer *, struct buf_node,
                                  u64);
+
 
 //  ************ TIMEOUT **********
 int adaptive = 1;
@@ -36,6 +35,7 @@ unsigned long estimateTimeout(unsigned long *EstimatedRTT, unsigned long *DevRTT
 
     return timeoutInterval;
 }
+
 
 //  ************ MUTEX ************
 static void create_mutex(pthread_mutex_t *mtx) {
@@ -121,7 +121,7 @@ static void *timeout_handler(void *arg) {
 //                    printf("inviato per timeout\n");
                         cb->cb_node[i % BUFFER_SIZE].timer = clock();
                     }
-                } //not adaptive
+                }
                 if (tspan >= TIMEOUT) { //<--- timer expired pkts
                     pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
                     send_pkt(sockfd, &pkt, servaddr);
@@ -171,6 +171,7 @@ static void *receive_ack(void *arg) {
     ack_t *ack = (ack_t *) dynamic_allocation(sizeof(ack_t));
     u32 slen = sizeof(struct sockaddr);
     u64 I, i, index;
+    //struct timeout *tmt = (struct timeout *) dynamic_allocation(sizeof(struct timeout *));
 
     while(1) {
         //waiting for ACK
@@ -193,8 +194,6 @@ static void *receive_ack(void *arg) {
 
         unsigned long estimatedRTT = cb->cb_node[index].tmt->estimatedRTT;
         unsigned long devRTT = cb->cb_node[index].tmt->DevRTT;
-
-        printf("%lu %lu\n", estimatedRTT, devRTT);
         //if cb->S > cb->E, then:
         //  ---------------------------------
         //  |   |   | E |   |   |   | S |   |
@@ -216,6 +215,8 @@ static void *receive_ack(void *arg) {
             index = i;
         }
 
+        //TODO: cosa succede se i è minore di E ma E è minore di S? se non
+        //sbaglio la condizione seguente non funziona più
         //if 'i' falls between 'S' and 'I', ACK refers to a pkt in the window
         if (cb->S <= index && index < I){
             cb->cb_node[index].acked = 1;
