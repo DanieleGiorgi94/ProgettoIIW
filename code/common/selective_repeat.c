@@ -19,6 +19,23 @@ static void send_ack(int, struct sockaddr, u64, char type);
 static char sorted_buf_insertion(struct circular_buffer *, struct buf_node,
                                  u64);
 
+//  ************ TIMEOUT **********
+int adaptive = 1;
+
+float alpha = 0.125;
+float beta = 0.25;
+unsigned long timeout;
+
+unsigned long estimateTimeout(unsigned long *EstimatedRTT, unsigned long *DevRTT, unsigned long SampleRTT) {
+
+    *EstimatedRTT = (1-alpha) * (*EstimatedRTT) + alpha * SampleRTT;
+    *DevRTT = (1-beta) * (*DevRTT) + beta * (SampleRTT - *EstimatedRTT);
+    double timeoutInterval = (*EstimatedRTT+ 4* (*DevRTT));
+
+    return timeoutInterval;
+}
+
+
 //  ************ MUTEX ************
 static void create_mutex(pthread_mutex_t *mtx) {
     if (pthread_mutex_init(mtx, NULL) != 0) {
@@ -172,6 +189,10 @@ static void *receive_ack(void *arg) {
 
         i = ack->n_seq % BUFFER_SIZE;
         index = i;
+
+        unsigned long estimatedRTT = cb->cb_node[index];
+        unsigned long devRTT = cb->cb_node[index];
+
         //if cb->S > cb->E, then:
         //  ---------------------------------
         //  |   |   | E |   |   |   | S |   |
@@ -203,6 +224,11 @@ static void *receive_ack(void *arg) {
 
         //move window's base to the first non-acked pkt of the window
         while (cb->cb_node[cb->S].acked == 1){
+            if (index % 10 == 0) { //sampleRTT
+                timeout = estimateTimeout(&estimatedRTT, &devRTT,
+                                          cb->cb_node[index].timer);
+                printf("timeout: %lu\n", timeout);
+            }
             if (cb->S == cb->E) break;
             cb->S = (cb->S + 1) % BUFFER_SIZE;
         }
