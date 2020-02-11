@@ -96,6 +96,14 @@ static void *timeout_handler(void *arg) {
         for (u32 i = cb->S; i < I; i++) {
             if (cb->cb_node[i % BUFFER_SIZE].acked == 0) { //<--- non-acked pkts
                 tspan = clock() - cb->cb_node[i % BUFFER_SIZE].timer;
+                if (adaptive) {
+                    if (tspan >= timeout) { //<--- timer expired pkts
+                        pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
+                        send_pkt(sockfd, &pkt, servaddr);
+//                    printf("inviato per timeout\n");
+                        cb->cb_node[i % BUFFER_SIZE].timer = clock();
+                    }
+                } //not adaptive
                 if (tspan >= TIMEOUT) { //<--- timer expired pkts
                     pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
                     send_pkt(sockfd, &pkt, servaddr);
