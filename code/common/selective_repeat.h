@@ -4,7 +4,7 @@
 
 #define BUFFER_SIZE 2048
 #define WINDOW_SIZE 1024
-#define TIMEOUT     2000000
+#define TIMEOUT     1000000
 #define LOSS_PROB   2
 
 #define PORT   5193
@@ -29,6 +29,10 @@ struct buf_node {
         char busy; //node busy (receiving)
     };
 	clock_t timer; // timer (sending)
+	union {
+	    unsigned long estimatedRTT;
+	    unsigned long devRTT;
+	};
 };
 
 struct circular_buffer {

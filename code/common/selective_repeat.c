@@ -21,16 +21,24 @@ static char sorted_buf_insertion(struct circular_buffer *, struct buf_node,
 
 //  ************ TIMEOUT **********
 int adaptive = 1;
+int evalRTT = 0;
 
 float alpha = 0.125;
 float beta = 0.25;
-unsigned long timeout;
+unsigned long timeout = TIMEOUT;
 
-unsigned long estimateTimeout(unsigned long *EstimatedRTT, unsigned long *DevRTT, unsigned long SampleRTT) {
+static unsigned long estimateTimeout(unsigned long *EstimatedRTT, unsigned long *DevRTT, unsigned long SampleRTT,
+                              struct circular_buffer *cb, int index) {
+
+    //printf("%lu %lu \n", *EstimatedRTT, *DevRTT);
+
 
     *EstimatedRTT = (1-alpha) * (*EstimatedRTT) + alpha * SampleRTT;
     *DevRTT = (1-beta) * (*DevRTT) + beta * (SampleRTT - *EstimatedRTT);
-    double timeoutInterval = (*EstimatedRTT+ 4* (*DevRTT));
+    unsigned long timeoutInterval = (*EstimatedRTT+ 4* (*DevRTT));
+
+    cb->cb_node[index].estimatedRTT = *EstimatedRTT;
+    cb->cb_node[index].devRTT = *DevRTT;
 
     return timeoutInterval;
 }
@@ -87,6 +95,8 @@ static void *timeout_handler(void *arg) {
     int sockfd = ptd->sockfd;
     struct circular_buffer *cb = ptd->cb;
     struct sockaddr *servaddr = ptd->servaddr;
+    unsigned long estimatedRTT;
+    unsigned long devRTT;
 
     u32 I;
     clock_t tspan;
@@ -114,10 +124,25 @@ static void *timeout_handler(void *arg) {
             if (cb->cb_node[i % BUFFER_SIZE].acked == 0) { //<--- non-acked pkts
                 tspan = clock() - cb->cb_node[i % BUFFER_SIZE].timer;
                 if (adaptive) {
+                    //sampleRTT viene valutato per un solo segmento che
+                    // per cui non si ha ancora ricevuto un ack.
+                    // Inoltre timeout non viene mai calcolato per segmenti ritrasmessi
+                    if (!evalRTT) {
+                        estimatedRTT = cb->cb_node[i].estimatedRTT;
+                        devRTT = cb->cb_node[i].devRTT;
+                        //printf("tspan: %lu\n", tspan);
+                        printf("timeout: %lu\n", timeout);
+
+                        timeout = estimateTimeout(&estimatedRTT, &devRTT,
+                                                  cb->cb_node[i].timer, cb, i);
+                        evalRTT = 1;
+                    }
+
                     if (tspan >= timeout) { //<--- timer expired pkts
+
                         pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
                         send_pkt(sockfd, &pkt, servaddr);
-//                    printf("inviato per timeout\n");
+                    printf("inviato per timeout\n");
                         cb->cb_node[i % BUFFER_SIZE].timer = clock();
                     }
                 } //not adaptive
@@ -129,6 +154,7 @@ static void *timeout_handler(void *arg) {
                 }
             }
         }
+        evalRTT = 0;
         unlock_buffer(cb);
     }
     return NULL;
@@ -190,8 +216,6 @@ static void *receive_ack(void *arg) {
         i = ack->n_seq % BUFFER_SIZE;
         index = i;
 
-        unsigned long estimatedRTT = cb->cb_node[index];
-        unsigned long devRTT = cb->cb_node[index];
 
         //if cb->S > cb->E, then:
         //  ---------------------------------
@@ -214,8 +238,6 @@ static void *receive_ack(void *arg) {
             index = i;
         }
 
-        //TODO: cosa succede se i è minore di E ma E è minore di S? se non
-        //sbaglio la condizione seguente non funziona più
         //if 'i' falls between 'S' and 'I', ACK refers to a pkt in the window
         if (cb->S <= index && index < I){
             cb->cb_node[index].acked = 1;
@@ -224,11 +246,6 @@ static void *receive_ack(void *arg) {
 
         //move window's base to the first non-acked pkt of the window
         while (cb->cb_node[cb->S].acked == 1){
-            if (index % 10 == 0) { //sampleRTT
-                timeout = estimateTimeout(&estimatedRTT, &devRTT,
-                                          cb->cb_node[index].timer);
-                printf("timeout: %lu\n", timeout);
-            }
             if (cb->S == cb->E) break;
             cb->S = (cb->S + 1) % BUFFER_SIZE;
         }
@@ -335,6 +352,8 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd) {
     cb->E = 0;
     cb->S = 0;
     cb->N = 0;
+    cb->cb_node[0].estimatedRTT = 0;
+    cb->cb_node[0].devRTT = 0;
 
     create_mutex(&(cb->mtx));
 
