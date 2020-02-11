@@ -12,12 +12,30 @@ static void send_pkt(int, pkt_t *, const struct sockaddr *);
 static char sym_lost_pkt(void);
 static void *timeout_handler(void *);
 static pkt_t create_pkt(int, u64);
+static unsigned long estimateTimeout(unsigned long *, unsigned long *, unsigned long);
+
 
 static void *merge_file(void *);
 static void *receiver(void *);
 static void send_ack(int, struct sockaddr, u64, char type);
 static char sorted_buf_insertion(struct circular_buffer *, struct buf_node,
                                  u64);
+
+//  ************ TIMEOUT **********
+int adaptive = 1;
+
+float alpha = 0.125;
+float beta = 0.25;
+unsigned long timeout;
+
+unsigned long estimateTimeout(unsigned long *EstimatedRTT, unsigned long *DevRTT, unsigned long SampleRTT) {
+
+    *EstimatedRTT = (1-alpha) * (*EstimatedRTT) + alpha * SampleRTT;
+    *DevRTT = (1-beta) * (*DevRTT) + beta * (SampleRTT - *EstimatedRTT);
+    double timeoutInterval = (*EstimatedRTT+ 4* (*DevRTT));
+
+    return timeoutInterval;
+}
 
 //  ************ MUTEX ************
 static void create_mutex(pthread_mutex_t *mtx) {
@@ -96,6 +114,14 @@ static void *timeout_handler(void *arg) {
         for (u32 i = cb->S; i < I; i++) {
             if (cb->cb_node[i % BUFFER_SIZE].acked == 0) { //<--- non-acked pkts
                 tspan = clock() - cb->cb_node[i % BUFFER_SIZE].timer;
+                if (adaptive) {
+                    if (tspan >= timeout) { //<--- timer expired pkts
+                        pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
+                        send_pkt(sockfd, &pkt, servaddr);
+//                    printf("inviato per timeout\n");
+                        cb->cb_node[i % BUFFER_SIZE].timer = clock();
+                    }
+                } //not adaptive
                 if (tspan >= TIMEOUT) { //<--- timer expired pkts
                     pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
                     send_pkt(sockfd, &pkt, servaddr);
@@ -164,6 +190,11 @@ static void *receive_ack(void *arg) {
 
         i = ack->n_seq % BUFFER_SIZE;
         index = i;
+
+        unsigned long estimatedRTT = cb->cb_node[index].tmt->estimatedRTT;
+        unsigned long devRTT = cb->cb_node[index].tmt->DevRTT;
+
+        printf("%lu %lu\n", estimatedRTT, devRTT);
         //if cb->S > cb->E, then:
         //  ---------------------------------
         //  |   |   | E |   |   |   | S |   |
@@ -185,11 +216,14 @@ static void *receive_ack(void *arg) {
             index = i;
         }
 
-        //TODO: cosa succede se i è minore di E ma E è minore di S? se non
-        //sbaglio la condizione seguente non funziona più
         //if 'i' falls between 'S' and 'I', ACK refers to a pkt in the window
         if (cb->S <= index && index < I){
             cb->cb_node[index].acked = 1;
+            if (index % 10 == 0) { //sampleRTT
+                timeout = estimateTimeout(&estimatedRTT, &devRTT,
+                                          cb->cb_node[index].timer);
+                printf("timeout: %lu\n", timeout);
+            }
 //            printf("ack %ld ricevuto\n", ack->n_seq);
         }
 

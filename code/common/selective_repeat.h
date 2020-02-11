@@ -29,6 +29,7 @@ struct buf_node {
         char busy; //node busy (receiving)
     };
 	clock_t timer; // timer (sending)
+	struct timeout *tmt;
 };
 
 struct circular_buffer {
@@ -37,4 +38,9 @@ struct circular_buffer {
 	u32 N; // pkt to send index (nextseqnum)
 	pthread_mutex_t mtx;
 	struct buf_node cb_node[BUFFER_SIZE];
+};
+
+struct timeout {
+    double estimatedRTT;
+    double DevRTT;
 };
