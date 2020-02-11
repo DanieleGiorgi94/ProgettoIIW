@@ -30,8 +30,8 @@ unsigned long timeout = TIMEOUT;
 static unsigned long estimateTimeout(unsigned long *EstimatedRTT, unsigned long *DevRTT, unsigned long SampleRTT,
                               struct circular_buffer *cb, int index) {
 
-    //printf("%lu %lu \n", *EstimatedRTT, *DevRTT);
-
+    //printf("%lu %lu \n", *EstimatedRTT, SampleRTT);
+    //printf("%lu\n", SampleRTT - *EstimatedRTT);
 
     *EstimatedRTT = (1-alpha) * (*EstimatedRTT) + alpha * SampleRTT;
     *DevRTT = (1-beta) * (*DevRTT) + beta * (SampleRTT - *EstimatedRTT);
@@ -142,7 +142,7 @@ static void *timeout_handler(void *arg) {
 
                         pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
                         send_pkt(sockfd, &pkt, servaddr);
-                    printf("inviato per timeout\n");
+                        //printf("inviato per timeout\n");
                         cb->cb_node[i % BUFFER_SIZE].timer = clock();
                     }
                 } //not adaptive
