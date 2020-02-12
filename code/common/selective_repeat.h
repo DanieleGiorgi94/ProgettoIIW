@@ -29,10 +29,6 @@ struct buf_node {
         char busy; //node busy (receiving)
     };
 	clock_t timer; // timer (sending)
-	union {
-	    unsigned long estimatedRTT;
-	    unsigned long devRTT;
-	};
 };
 
 struct circular_buffer {

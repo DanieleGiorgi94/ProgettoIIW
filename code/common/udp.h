@@ -12,6 +12,7 @@ typedef struct {
     u32 length;
     u32 rwnd;
     char type;
+    char retransmitted;
 } header_t;
 
 typedef struct {

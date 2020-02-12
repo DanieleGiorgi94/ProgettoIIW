@@ -21,24 +21,23 @@ static char sorted_buf_insertion(struct circular_buffer *, struct buf_node,
 
 //  ************ TIMEOUT **********
 int adaptive = 1;
-int evalRTT = 0;
 
 float alpha = 0.125;
 float beta = 0.25;
 unsigned long timeout = TIMEOUT;
+static long estimatedRTT;
+static long devRTT;
 
-static unsigned long estimateTimeout(unsigned long *EstimatedRTT, unsigned long *DevRTT, unsigned long SampleRTT,
-                              struct circular_buffer *cb, int index) {
 
-    //printf("%lu %lu \n", *EstimatedRTT, SampleRTT);
-    //printf("%lu\n", SampleRTT - *EstimatedRTT);
+unsigned long estimateTimeout(long *EstimatedRTT, long *DevRTT, long SampleRTT) {
+
 
     *EstimatedRTT = (1-alpha) * (*EstimatedRTT) + alpha * SampleRTT;
-    *DevRTT = (1-beta) * (*DevRTT) + beta * (SampleRTT - *EstimatedRTT);
-    unsigned long timeoutInterval = (*EstimatedRTT+ 4* (*DevRTT));
+    *DevRTT = (1-beta) * (*DevRTT) + beta * labs(SampleRTT - *EstimatedRTT);
+    long timeoutInterval = (*EstimatedRTT+ 4* (*DevRTT));
 
-    cb->cb_node[index].estimatedRTT = *EstimatedRTT;
-    cb->cb_node[index].devRTT = *DevRTT;
+    estimatedRTT = *EstimatedRTT;
+    devRTT = *DevRTT;
 
     return timeoutInterval;
 }
@@ -95,8 +94,6 @@ static void *timeout_handler(void *arg) {
     int sockfd = ptd->sockfd;
     struct circular_buffer *cb = ptd->cb;
     struct sockaddr *servaddr = ptd->servaddr;
-    unsigned long estimatedRTT;
-    unsigned long devRTT;
 
     u32 I;
     clock_t tspan;
@@ -124,37 +121,24 @@ static void *timeout_handler(void *arg) {
             if (cb->cb_node[i % BUFFER_SIZE].acked == 0) { //<--- non-acked pkts
                 tspan = clock() - cb->cb_node[i % BUFFER_SIZE].timer;
                 if (adaptive) {
-                    //sampleRTT viene valutato per un solo segmento che
-                    // per cui non si ha ancora ricevuto un ack.
-                    // Inoltre timeout non viene mai calcolato per segmenti ritrasmessi
-                    if (!evalRTT) {
-                        estimatedRTT = cb->cb_node[i].estimatedRTT;
-                        devRTT = cb->cb_node[i].devRTT;
-                        //printf("tspan: %lu\n", tspan);
-                        printf("timeout: %lu\n", timeout);
-
-                        timeout = estimateTimeout(&estimatedRTT, &devRTT,
-                                                  cb->cb_node[i].timer, cb, i);
-                        evalRTT = 1;
-                    }
-
                     if (tspan >= timeout) { //<--- timer expired pkts
 
                         pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
                         send_pkt(sockfd, &pkt, servaddr);
-                        //printf("inviato per timeout\n");
+                        cb->cb_node[i % BUFFER_SIZE].pkt.header.retransmitted = 1;
+                        cb->cb_node[i % BUFFER_SIZE].timer = clock();
+                        printf("inviato per timeout\n");
+
+                    }
+                }else { //not adaptive
+                    if (tspan >= TIMEOUT) { //<--- timer expired pkts
+                        pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
+                        send_pkt(sockfd, &pkt, servaddr);
                         cb->cb_node[i % BUFFER_SIZE].timer = clock();
                     }
-                } //not adaptive
-                if (tspan >= TIMEOUT) { //<--- timer expired pkts
-                    pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
-                    send_pkt(sockfd, &pkt, servaddr);
-//                    printf("inviato per timeout\n");
-                    cb->cb_node[i % BUFFER_SIZE].timer = clock();
                 }
             }
         }
-        evalRTT = 0;
         unlock_buffer(cb);
     }
     return NULL;
@@ -196,6 +180,7 @@ static void *receive_ack(void *arg) {
     ack_t *ack = (ack_t *) dynamic_allocation(sizeof(ack_t));
     u32 slen = sizeof(struct sockaddr);
     u64 I, i, index;
+
 
     while(1) {
         //waiting for ACK
@@ -241,6 +226,16 @@ static void *receive_ack(void *arg) {
         //if 'i' falls between 'S' and 'I', ACK refers to a pkt in the window
         if (cb->S <= index && index < I){
             cb->cb_node[index].acked = 1;
+
+            // Timeout non viene mai calcolato per segmenti ritrasmessi
+            printf("%d\b", cb->cb_node[i % BUFFER_SIZE].pkt.header.retransmitted);
+            if (cb->cb_node[i % BUFFER_SIZE].pkt.header.retransmitted == 0) {
+                printf("est: %li dev: %li\n", estimatedRTT, devRTT);
+                printf("timeout: %lu\n", timeout);
+
+                timeout = estimateTimeout(&estimatedRTT, &devRTT,
+                                          cb->cb_node[index].timer);
+            }
 //            printf("ack %ld ricevuto\n", ack->n_seq);
         }
 
@@ -352,8 +347,6 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd) {
     cb->E = 0;
     cb->S = 0;
     cb->N = 0;
-    cb->cb_node[0].estimatedRTT = 0;
-    cb->cb_node[0].devRTT = 0;
 
     create_mutex(&(cb->mtx));
 
