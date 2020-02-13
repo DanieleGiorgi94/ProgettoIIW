@@ -19,6 +19,7 @@ struct comm_thread {
     int sockfd;
     struct circular_buffer *cb;
     struct sockaddr *servaddr;
+    unsigned long *timeout;
     pthread_t tid;
 };
 

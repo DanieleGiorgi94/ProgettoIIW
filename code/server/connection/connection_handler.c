@@ -2,7 +2,8 @@
 
 static void release_resources(request_t *, server_info *);
 
-void *create_connection(void *arg) {
+void *create_connection(void *arg)
+{
     struct service_thread *ptd = (struct service_thread *) arg;
 
     server_info *srv_info = ptd->srv_info;
@@ -32,7 +33,7 @@ void *create_connection(void *arg) {
         perror("Errore in sendto");
         exit(EXIT_FAILURE);
     }
-    //printf("Sent SYN-ACK with n_seq=%lu, %d\n", req->initial_n_seq, req->ACK);
+    printf("Sent SYN-ACK with n_seq=%lu, %d\n", req->initial_n_seq, req->ACK);
 
     // Waiting for SOCK_START
     while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
@@ -46,8 +47,7 @@ void *create_connection(void *arg) {
         //printf("%d\n", req->type);
         goto SYNACK;
     }
-
-    //printf("SOCK_START received.\n");
+    printf("SOCK_START received.\n");
 
     /* Qua ho fatto in modo che ascolto solo se è stata effettivamente
      * creata la socket nel client. Dovremmo fare una recvfrom
@@ -55,6 +55,12 @@ void *create_connection(void *arg) {
      * speciale che indichi che è stata creata.
      * OVviamente forse è da migliorare
      */
+
+    printf("%d, %d\n", srv_info->cliaddr.sin_port,
+        srv_info->cliaddr.sin_addr.s_addr);
+    printf("%d, %d\n", srv_info->servaddr.sin_port,
+        srv_info->servaddr.sin_addr.s_addr);
+    printf("%lu\n", srv_info->port_number);
 
     //ACK (attesa sulla nuova socket)
     while (recvfrom(new_sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
@@ -65,7 +71,7 @@ void *create_connection(void *arg) {
             return NULL;
         }
     }
-    //printf("Received ACK with n_seq=%lu\n", req->initial_n_seq);
+    printf("Received ACK with n_seq=%lu\n", req->initial_n_seq);
 
     if ((req->SYN == 0 && req->ACK == server_isn + 1) || req->FIN > 0) {
         //printf(" ******* 3Way Handshake completed ******** \n");
@@ -80,6 +86,7 @@ void *create_connection(void *arg) {
         }
         printf("Received request: ");
         printf("%s\n", req->payload);
+
         if (req->type == LIST_REQ)
             list_command_handler(new_sockfd, srv_info->cliaddr, srv_info->path);
         else if (req->type == GET_REQ)
@@ -96,7 +103,6 @@ void *create_connection(void *arg) {
     }
     return NULL;
 }
-
 static void release_resources(request_t *req, server_info *srv_info)
 {
     free(req);

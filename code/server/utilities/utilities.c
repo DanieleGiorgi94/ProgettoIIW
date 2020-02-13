@@ -30,3 +30,22 @@ int check_file(char *file, char *list)
     else
         return 1;
 }
+void create_new_socket(int *new_sockfd, struct sockaddr_in *cliaddr,
+        int new_port_number)
+{
+    if ((*new_sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        perror("socket() failed");
+        exit(EXIT_FAILURE);
+    }
+
+    //printf("nseq: %lu\n", req->initial_n_seq);
+    memset((void *) cliaddr, 0, sizeof(*cliaddr));
+    cliaddr->sin_family = AF_INET;
+    cliaddr->sin_addr.s_addr = htonl(INADDR_ANY);
+    cliaddr->sin_port = htons(new_port_number);
+    if (bind(*new_sockfd, (struct sockaddr *) cliaddr,
+                                sizeof(*cliaddr)) < 0) {
+        perror("errore in bind");
+        exit(EXIT_FAILURE);
+    }
+}

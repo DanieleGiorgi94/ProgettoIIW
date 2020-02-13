@@ -10,5 +10,6 @@ struct service_thread {
 };
 
 struct available_ports {
+    int port_numbers[MAX_CONNECTIONS];
     char available[MAX_CONNECTIONS];
 };

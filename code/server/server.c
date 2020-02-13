@@ -3,6 +3,7 @@
 static void main_task(int, struct sockaddr_in);
 static void create_service_thread(server_info *);
 static int select_available_port(struct available_ports *);
+static void set_port_numbers(int *);
 
 static void main_task(int sockfd, struct sockaddr_in servaddr)
 {
@@ -23,6 +24,7 @@ static void main_task(int sockfd, struct sockaddr_in servaddr)
     srv_info->path = path;
     srv_info->no_connections = no_connections;
     srv_info->ports = ports;
+    set_port_numbers(ports->port_numbers);
 
 RESET:
 
@@ -50,7 +52,7 @@ RESET:
     if (*no_connections < MAX_CONNECTIONS) {
         //creating new socket for the new client
         int index = select_available_port(ports);
-        u64 new_port_number = PORT + index;
+        u64 new_port_number = ports->port_numbers[index];
         int new_sockfd;
 
         for (int j = 0; j < MAX_CONNECTIONS; j++) {
@@ -59,22 +61,7 @@ RESET:
         printf("\n");
         printf("%d\n", index);
         
-        if ((new_sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-            perror("socket() failed");
-            exit(EXIT_FAILURE);
-        }
-
-        //printf("nseq: %lu\n", req->initial_n_seq);
-        memset((void *) &cliaddr, 0, sizeof(cliaddr));
-        cliaddr.sin_family = AF_INET;
-        cliaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-        cliaddr.sin_port = htons(new_port_number);
-        if (bind(new_sockfd, (struct sockaddr *) &cliaddr,
-                                    sizeof(cliaddr)) < 0) {
-            perror("errore in bind");
-            exit(EXIT_FAILURE);
-        }
-
+        create_new_socket(&new_sockfd, &cliaddr, new_port_number);
         printf("New sockfd created, port=%lu\n", new_port_number);
 
         //creating new thread
@@ -85,7 +72,7 @@ RESET:
         create_service_thread(srv_info);
 
         *no_connections += 1;
-        ports->available[index - 1] = 1;
+        ports->available[index] = 1;
     } else {
         printf("Server is now full.\n");
         goto RESET;
@@ -103,11 +90,17 @@ static void create_service_thread(server_info *srv_info)
         perror("pthread_create() failed");
     }
 }
+static void set_port_numbers(int *port_numbers)
+{
+    for (int i = 0; i < MAX_CONNECTIONS; i++) {
+        port_numbers[i] = PORT + i + 1;
+    }
+}
 static int select_available_port(struct available_ports *ports)
 {
     for (int i = 0; i < MAX_CONNECTIONS; i++) {
         if (ports->available[i] == 0)
-            return i + 1;
+            return i;
     }
     return -1;
 }

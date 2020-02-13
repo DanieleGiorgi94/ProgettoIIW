@@ -1,8 +1,6 @@
 #ifndef _HEADER_H_
 #define _HEADER_H_
 
-#define TEST 0
-
 #include "../common/reliable_udp.h"
 #include "utilities/utilities.h"
 #include "list_command/filelist_request.h"

@@ -4,6 +4,7 @@
 
 char *list_dir(char *);
 int check_file(char *, char *);
+void create_new_socket(int *, struct sockaddr_in *, int);
 
 typedef struct {
     int sockfd;

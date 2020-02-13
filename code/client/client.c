@@ -6,7 +6,8 @@ static void create_service_thread(char *, char *, client_info *, char);
 static char **tokenize_string(char *, char *);
 static void fill_array(char *, char *, int);
 
-static void main_task(client_info *c_info) {
+static void main_task(client_info *c_info)
+{
     char command[BUFLEN];
     char **token_vector;
     char cmd[MAX_CMD_LENGTH], token[BUFLEN - MAX_CMD_LENGTH];
@@ -61,7 +62,8 @@ static void main_task(client_info *c_info) {
     }
 }
 static void create_service_thread(char *cmd, char *token, client_info *c_info,
-        char type) {
+        char type)
+{
     struct service_thread s_thread;
 
     //printf("creating new thread\n");
@@ -97,7 +99,8 @@ static void fill_array(char *out_array, char *in_array, int length)
         out_array[i] = in_array[i];
     }
 }
-static char **tokenize_string(char *buffer, char *delimiter) {
+static char **tokenize_string(char *buffer, char *delimiter)
+{
     int i = 0;
     //TODO: secondo me qua potremmo allocare 2 * sizeof(char *)
     //char **token_vector = dynamic_allocation(BUFLEN * sizeof(char *));
@@ -111,7 +114,8 @@ static char **tokenize_string(char *buffer, char *delimiter) {
 
     return token_vector;
 }
-static void print_banner(char *ip, u32 port) {
+static void print_banner(char *ip, u32 port)
+{
     printf(WELCOME_STRING, ip, port);
     printf("\n"SPACER);
     printf(FIRST_LINE);
@@ -122,7 +126,8 @@ static void print_banner(char *ip, u32 port) {
     printf(EXIT_LINE);
     printf(SPACER);
 }
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     struct sockaddr_in servaddr; //IPv4 address
     int sockfd;
     client_info *c_info = dynamic_allocation(sizeof(client_info));

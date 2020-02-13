@@ -17,6 +17,7 @@ void *list_command_handler(void *arg)
 
     //three-way handshake using this new socket
     if (create_connection(c_info)) {
+        c_info->connected = 1;
         //printf("connessione stabilita\n");
         request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
 

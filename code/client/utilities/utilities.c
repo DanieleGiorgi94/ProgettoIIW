@@ -25,3 +25,19 @@ void send_request(char *cmd, char *token, client_info *c_info)
     //printf("Sent request\n");
     free_allocation(req);
 }
+void create_new_socket(int *new_sockfd, struct sockaddr_in *cliaddr,
+        int new_port, char *argv)
+{
+    if ((*new_sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        perror("socket() failed");
+        exit(EXIT_FAILURE);
+    }
+    memset((void *) cliaddr, 0, sizeof(*cliaddr));
+    cliaddr->sin_family = AF_INET;
+    cliaddr->sin_addr.s_addr = htonl(INADDR_ANY);
+    cliaddr->sin_port = htons(new_port);
+    if (inet_pton(AF_INET, argv, &(cliaddr->sin_addr)) <= 0) {
+        fprintf(stderr, "errore in inet_pton");
+        exit(EXIT_FAILURE);
+    }
+}

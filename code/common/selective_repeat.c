@@ -19,29 +19,21 @@ static void send_ack(int, struct sockaddr, u64, char type);
 static char sorted_buf_insertion(struct circular_buffer *, struct buf_node,
                                  u64);
 
+static unsigned long estimateTimeout(long *, long *, long);
+
 //  ************ TIMEOUT **********
-int adaptive = 1;
+#define ALPHA 0.125
+#define BETA 0.25
 
-float alpha = 0.125;
-float beta = 0.25;
-unsigned long timeout = TIMEOUT;
-static long estimatedRTT;
-static long devRTT;
-
-
-unsigned long estimateTimeout(long *EstimatedRTT, long *DevRTT, long SampleRTT) {
-
-
-    *EstimatedRTT = (1-alpha) * (*EstimatedRTT) + alpha * SampleRTT;
-    *DevRTT = (1-beta) * (*DevRTT) + beta * labs(SampleRTT - *EstimatedRTT);
-    long timeoutInterval = (*EstimatedRTT+ 4* (*DevRTT));
-
-    estimatedRTT = *EstimatedRTT;
-    devRTT = *DevRTT;
+static unsigned long estimateTimeout(long *EstimatedRTT, long *DevRTT,
+        long SampleRTT)
+{
+    *EstimatedRTT = (1 - ALPHA) * (*EstimatedRTT) + ALPHA * SampleRTT;
+    *DevRTT = (1 - BETA) * (*DevRTT) + BETA * labs(SampleRTT - *EstimatedRTT);
+    long timeoutInterval = (*EstimatedRTT + 4 * (*DevRTT));
 
     return timeoutInterval;
 }
-
 
 //  ************ MUTEX ************
 static void create_mutex(pthread_mutex_t *mtx) {
@@ -94,6 +86,7 @@ static void *timeout_handler(void *arg) {
     int sockfd = ptd->sockfd;
     struct circular_buffer *cb = ptd->cb;
     struct sockaddr *servaddr = ptd->servaddr;
+    unsigned long *timeout = ptd->timeout;
 
     u32 I;
     clock_t tspan;
@@ -120,17 +113,15 @@ static void *timeout_handler(void *arg) {
         for (u32 i = cb->S; i < I; i++) {
             if (cb->cb_node[i % BUFFER_SIZE].acked == 0) { //<--- non-acked pkts
                 tspan = clock() - cb->cb_node[i % BUFFER_SIZE].timer;
-                if (adaptive) {
-                    if (tspan >= timeout) { //<--- timer expired pkts
-
+                if (ADAPTIVE) {
+                    if (tspan >= *timeout) { //<--- timer expired pkts
                         pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
                         send_pkt(sockfd, &pkt, servaddr);
                         cb->cb_node[i % BUFFER_SIZE].pkt.header.retransmitted = 1;
                         cb->cb_node[i % BUFFER_SIZE].timer = clock();
-                        printf("inviato per timeout\n");
-
+                        //printf("inviato per timeout\n");
                     }
-                }else { //not adaptive
+                } else { //not adaptive
                     if (tspan >= TIMEOUT) { //<--- timer expired pkts
                         pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
                         send_pkt(sockfd, &pkt, servaddr);
@@ -176,11 +167,14 @@ static void *receive_ack(void *arg) {
     int sockfd = ptd->sockfd;
     struct circular_buffer *cb = ptd->cb;
     struct sockaddr *servaddr = ptd->servaddr;
+    unsigned long *timeout = ptd->timeout;
+
     //char *filepath = obtain_path(cmd, token, 0);
     ack_t *ack = (ack_t *) dynamic_allocation(sizeof(ack_t));
     u32 slen = sizeof(struct sockaddr);
     u64 I, i, index;
-
+    long estimatedRTT = 0;
+    long devRTT = 0;
 
     while(1) {
         //waiting for ACK
@@ -212,7 +206,7 @@ static void *receive_ack(void *arg) {
         //  ----------------------------------------------
         //else consider
         //  ---------------------------------
-        //  |   |   | I |   |   |   | S |   |
+        //  |   |   | S |   |   |   | E |   |
         //  ---------------------------------
         if (cb->S > cb->E){
             I = cb->E + BUFFER_SIZE;
@@ -231,9 +225,8 @@ static void *receive_ack(void *arg) {
             printf("%d\b", cb->cb_node[i % BUFFER_SIZE].pkt.header.retransmitted);
             if (cb->cb_node[i % BUFFER_SIZE].pkt.header.retransmitted == 0) {
                 printf("est: %li dev: %li\n", estimatedRTT, devRTT);
-                printf("timeout: %lu\n", timeout);
-
-                timeout = estimateTimeout(&estimatedRTT, &devRTT,
+                printf("timeout: %lu\n", *timeout);
+                *timeout = estimateTimeout(&estimatedRTT, &devRTT,
                                           cb->cb_node[index].timer);
             }
 //            printf("ack %ld ricevuto\n", ack->n_seq);
@@ -341,6 +334,9 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd) {
     struct comm_file_thread sf_thread;
     struct comm_thread snd_thread, rca_thread, tmh_thread;
     struct circular_buffer *cb;
+    unsigned long *timeout = (unsigned long *)
+        dynamic_allocation(sizeof(*timeout));
+    *timeout = TIMEOUT;
 
     cb = (struct circular_buffer *)
             dynamic_allocation(sizeof(struct circular_buffer));
@@ -363,11 +359,13 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd) {
     rca_thread.sockfd = sockfd;
     rca_thread.cb = cb;
     rca_thread.servaddr = servaddr;
+    rca_thread.timeout = timeout;
 
     //timeout_handler's thread
     tmh_thread.sockfd = sockfd;
     tmh_thread.cb = cb;
     tmh_thread.servaddr = servaddr;
+    tmh_thread.timeout = timeout;
 
     if ((pthread_create(&sf_thread.tid, NULL, split_file, &sf_thread) ||
          pthread_create(&snd_thread.tid, NULL, sender, &snd_thread) ||
@@ -510,9 +508,9 @@ static void *merge_file(void *arg) {
 //            printf("Reading pkt %ld from cb\n", pkt.header.n_seq);
 
             if (pkt.header.type == END_OF_FILE) {
-                printf("------------------------------------");
-                printf("merge_file terminated!");
-                printf("------------------------------------\n");
+                //printf("------------------------------------");
+                //printf("merge_file terminated!");
+                //printf("------------------------------------\n");
                 return NULL;
             }
             write_block(fd, pkt.payload, pkt.header.length);
