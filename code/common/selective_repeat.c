@@ -240,6 +240,7 @@ static void *receive_ack(void *arg) {
 
         if (ack->type == END_OF_FILE) {
             //TODO: return something special
+	    cb->end_transmission = 1;
             unlock_buffer(cb);
             return NULL;
         }
@@ -283,6 +284,7 @@ static void *sender(void *arg) {
                 cb->N = (cb->N + 1) % BUFFER_SIZE;
             }
         }
+	if (cb->end_transmission == 1) return NULL;
 //        printf("sender unlock\n");
         unlock_buffer(cb);
     }
@@ -343,6 +345,7 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd) {
     cb->E = 0;
     cb->S = 0;
     cb->N = 0;
+    cb->end_transmission = 0;
 
     create_mutex(&(cb->mtx));
 
@@ -475,6 +478,7 @@ static void *receiver(void *arg) {
 //            printf("receiver lock\n");
         }
 //        printf("receiver unlock\n");
+	if (cb->end_transmission == 1) return NULL;  
         unlock_buffer(cb);
     }
 }
@@ -511,7 +515,9 @@ static void *merge_file(void *arg) {
                 //printf("------------------------------------");
                 //printf("merge_file terminated!");
                 //printf("------------------------------------\n");
-                return NULL;
+                cb->end_transmission = 1;
+		unlock_buffer(cb);
+		return NULL;
             }
             write_block(fd, pkt.payload, pkt.header.length);
 
@@ -532,6 +538,7 @@ void receive_file(int sockfd, struct sockaddr *servaddr, int fd) {
     cb->S = 0;
     cb->E = 0;
     cb->N = 0;
+    cb->end_transmission = 0;
 
     create_mutex(&(cb->mtx));
 

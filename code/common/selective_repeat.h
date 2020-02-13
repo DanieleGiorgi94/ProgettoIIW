@@ -37,5 +37,6 @@ struct circular_buffer {
 	u32 S; // buffer's start index and window's base (start/base)
 	u32 N; // pkt to send index (nextseqnum)
 	pthread_mutex_t mtx;
+	char end_transmission; // flag 
 	struct buf_node cb_node[BUFFER_SIZE];
 };
