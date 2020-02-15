@@ -1,3 +1,4 @@
+
 #ifndef _RELIABLE_UDP_H_
 #define _RELIABLE_UDP_H_
 
@@ -13,6 +14,7 @@ typedef unsigned long u64;
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sched.h>
+#include <sys/time.h>
 #include "udp.h"
 #include "comm.h"
 #include "selective_repeat.h"

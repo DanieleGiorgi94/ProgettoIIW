@@ -8,7 +8,7 @@ void exit_command_handler(int sockfd, int fin, char *no_connections,
     srand(time(NULL));
     u64 server_isn = rand() % 100;
 
-    printf("Received FIN\n");
+    //printf("Received FIN\n");
 
     // Invia ACK
     req->initial_n_seq = server_isn;
@@ -20,7 +20,7 @@ void exit_command_handler(int sockfd, int fin, char *no_connections,
         perror("Errore in sendto: invio del pacchetto request_t");
         exit(EXIT_FAILURE);
     }
-    printf("Sent ACK %d\n", req->ACK);
+    //printf("Sent ACK %d\n", req->ACK);
 
     // Invia FIN
     req->initial_n_seq = server_isn + 1;
@@ -31,7 +31,7 @@ void exit_command_handler(int sockfd, int fin, char *no_connections,
         perror("Errore in sendto: invio del pacchetto request_t");
         exit(EXIT_FAILURE);
     }
-    printf("Sent FIN %d\n", req->FIN);
+    //printf("Sent FIN %d\n", req->FIN);
 
     // aspetta ACK
     clock_t tspan;
@@ -49,7 +49,7 @@ void exit_command_handler(int sockfd, int fin, char *no_connections,
         if (clock() - tspan > 1000000)
             break;
     }
-    printf("Received ACK %d\n", req->ACK);
+    //printf("Received ACK %d\n", req->ACK);
 
     if (req->ACK == 2) {
         *no_connections -= 1;

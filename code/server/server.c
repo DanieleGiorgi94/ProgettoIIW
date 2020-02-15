@@ -56,10 +56,10 @@ RESET:
         int new_sockfd;
 
         for (int j = 0; j < MAX_CONNECTIONS; j++) {
-            printf("%d ", ports->available[j]);
+            //printf("%d ", ports->available[j]);
         }
-        printf("\n");
-        printf("%d\n", index);
+        //printf("\n");
+        //printf("%d\n", index);
         
         create_new_socket(&new_sockfd, &cliaddr, new_port_number);
         printf("New sockfd created, port=%lu\n", new_port_number);
@@ -123,15 +123,8 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    if (TEST == 0) {
-        main_task(sockfd, servaddr);
-        close(sockfd);
-    } else {
-        char *path = obtain_path(NULL, NULL, 1);
-        int fd = open_file(strncat(path, "prova.txt", 9), O_WRONLY | O_CREAT);
-
-        receive_file(sockfd, (struct sockaddr *) &servaddr, fd);
-    }
+    main_task(sockfd, servaddr);
+    close(sockfd);
 
     exit(EXIT_SUCCESS);
 }

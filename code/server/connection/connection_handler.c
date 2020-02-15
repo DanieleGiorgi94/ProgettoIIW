@@ -33,7 +33,7 @@ void *create_connection(void *arg)
         perror("Errore in sendto");
         exit(EXIT_FAILURE);
     }
-    printf("Sent SYN-ACK with n_seq=%lu, %d\n", req->initial_n_seq, req->ACK);
+    //printf("Sent SYN-ACK with n_seq=%lu, %d\n", req->initial_n_seq, req->ACK);
 
     // Waiting for SOCK_START
     while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
@@ -47,7 +47,7 @@ void *create_connection(void *arg)
         //printf("%d\n", req->type);
         goto SYNACK;
     }
-    printf("SOCK_START received.\n");
+    //printf("SOCK_START received.\n");
 
     /* Qua ho fatto in modo che ascolto solo se è stata effettivamente
      * creata la socket nel client. Dovremmo fare una recvfrom
@@ -56,12 +56,12 @@ void *create_connection(void *arg)
      * OVviamente forse è da migliorare
      */
 
-    printf("%d, %d\n", srv_info->cliaddr.sin_port,
+   /* printf("%d, %d\n", srv_info->cliaddr.sin_port,
         srv_info->cliaddr.sin_addr.s_addr);
     printf("%d, %d\n", srv_info->servaddr.sin_port,
         srv_info->servaddr.sin_addr.s_addr);
     printf("%lu\n", srv_info->port_number);
-
+*/
     //ACK (attesa sulla nuova socket)
     while (recvfrom(new_sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
             (struct sockaddr *) &srv_info->cliaddr, &slen) < 0) {
@@ -71,7 +71,7 @@ void *create_connection(void *arg)
             return NULL;
         }
     }
-    printf("Received ACK with n_seq=%lu\n", req->initial_n_seq);
+   // printf("Received ACK with n_seq=%lu\n", req->initial_n_seq);
 
     if ((req->SYN == 0 && req->ACK == server_isn + 1) || req->FIN > 0) {
         //printf(" ******* 3Way Handshake completed ******** \n");

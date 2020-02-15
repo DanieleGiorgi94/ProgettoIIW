@@ -102,8 +102,6 @@ static void fill_array(char *out_array, char *in_array, int length)
 static char **tokenize_string(char *buffer, char *delimiter)
 {
     int i = 0;
-    //TODO: secondo me qua potremmo allocare 2 * sizeof(char *)
-    //char **token_vector = dynamic_allocation(BUFLEN * sizeof(char *));
     char **token_vector = dynamic_allocation(2 * sizeof(char *));
 
     token_vector[i] = strtok(buffer, delimiter);
@@ -156,21 +154,8 @@ int main(int argc, char **argv)
     c_info->servaddr = servaddr;
     c_info->argv = argv[1];
 
-    if (TEST == 0) {
-        print_banner(inet_ntoa(servaddr.sin_addr), ntohs(servaddr.sin_port));
-        main_task(c_info);
-    } else {
-//        char *path = obtain_path(NULL, NULL, 1);
-//        int fd = open_file(strcat(path, "/UPLOAD_FILES/1GB.zip"), O_RDONLY);
-//        int put_fd = open_file(strcat(path, "log_put"), O_WRONLY);
-//        clock_t time;
-//
-//        clock_t starting_time = clock();
-//        send_file(c_info->sockfd, (struct sockaddr *) servaddr, fd);
-//        time = clock() - starting_time;
-//        write_block(put_fd, &time, sizeof(clock_t));
-//        write_block(put_fd, "\n", sizeof(char));
-    }
+    print_banner(inet_ntoa(servaddr.sin_addr), ntohs(servaddr.sin_port));
+    main_task(c_info);
 
     return EXIT_SUCCESS;
 }

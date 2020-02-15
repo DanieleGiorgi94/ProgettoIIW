@@ -225,7 +225,7 @@ static void *receive_ack(void *arg) {
             // Timeout non viene mai calcolato per segmenti ritrasmessi
             //printf("%d\b", cb->cb_node[i % BUFFER_SIZE].pkt.header.retransmitted);
             if (cb->cb_node[i % BUFFER_SIZE].pkt.header.retransmitted == 0) {
-                printf("%li, %li, %lu\n", estimatedRTT, (clock()-cb->cb_node[index].timer), *timeout);
+                printf("%li, %li\n", estimatedRTT, (clock()-cb->cb_node[index].timer));
                 *timeout = estimateTimeout(&estimatedRTT, &devRTT,
                                            (clock()-cb->cb_node[index].timer));
             }
@@ -237,7 +237,7 @@ static void *receive_ack(void *arg) {
             if (cb->cb_node[cb->S].pkt.header.type == END_OF_FILE) {
                 cb->end_transmission = 1;
                 unlock_buffer(cb);
-                printf("receive ack terminato\n");
+                //printf("receive ack terminato\n");
                 fflush(stdout);
                 return NULL;
             }
@@ -267,7 +267,7 @@ static void *sender(void *arg) {
             //printf("sender unlock\n");
             unlock_buffer(cb);
             if (cb->end_transmission == 1) {
-                printf("sender terminato\n");
+                //printf("sender terminato\n");
                 return NULL;
             }
             usleep_for(SLEEP_TIME);
@@ -437,14 +437,14 @@ static char sorted_buf_insertion(struct circular_buffer *cb,
 
     /* refuse pkt if node's busy */
     if (cb->cb_node[i].busy == 1) {
-        printf("Scarto pacchetto %ld\n", seqnum);
+        //printf("Scarto pacchetto %ld\n", seqnum);
         if (cb->cb_node[i].pkt.header.n_seq == seqnum)
             return 1;
         else return 0;
     }
 
     cb->cb_node[i] = cbn;
-    printf("inserisco pacchetto %ld\n", cbn.pkt.header.n_seq);
+    //printf("inserisco pacchetto %ld\n", cbn.pkt.header.n_seq);
     //printf("Inserito in posizione %lu\n", i);
 
     if (i > cb->E + (cb->S > cb->E) * BUFFER_SIZE)
@@ -458,7 +458,7 @@ static void send_ack(int sockfd, struct sockaddr servaddr, u64 seqnum,
     ack->n_seq = seqnum;
     ack->type = type;
 
-    printf("sending ack %ld\n", seqnum);
+    //printf("sending ack %ld\n", seqnum);
     /* sends ACK */
     if (sendto(sockfd, (void *)ack, sizeof(ack_t), 0, &servaddr,
                sizeof(servaddr)) < 0) {

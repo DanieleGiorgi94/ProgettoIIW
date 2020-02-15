@@ -17,5 +17,5 @@ void list_command_handler(int sockfd, struct sockaddr_in cliaddr, char *path)
         perror("Errore in sendto: invio del pacchetto twh_request_t");
         exit(EXIT_FAILURE);
     }
-    printf("Sent list\n");
+    //printf("Sent list\n");
 }

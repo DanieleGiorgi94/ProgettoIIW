@@ -34,7 +34,7 @@ int create_connection(client_info *c_info)
         perror("sendto() while sending SYN");
         exit(EXIT_FAILURE);
     }
-    printf("Sent SYN with n_seq=%lu\n", req->initial_n_seq);
+    //printf("Sent SYN with n_seq=%lu\n", req->initial_n_seq);
 
     //SYN-ACK (qua riceve la nuova port number)
     while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
@@ -44,8 +44,8 @@ int create_connection(client_info *c_info)
             exit(EXIT_FAILURE);
         }
     }
-    printf("Received SYN-ACK with ack=%d and nseq=%lu\n", req->ACK,
-                                                        req->initial_n_seq);
+    //printf("Received SYN-ACK with ack=%d and nseq=%lu\n", req->ACK,
+     //                                                   req->initial_n_seq);
 
     if (req->SYN == 1 && req->ACK == client_isn + 1 && req->FIN == 0) {
 
@@ -53,9 +53,9 @@ int create_connection(client_info *c_info)
         client_isn = req->ACK;
         svr_isn = req->initial_n_seq;
 
-        printf("%d, %d\n", cliaddr.sin_port, cliaddr.sin_addr.s_addr);
-        printf("%d, %d\n", servaddr.sin_port, servaddr.sin_addr.s_addr);
-        printf("%lu\n", new_port);
+        //printf("%d, %d\n", cliaddr.sin_port, cliaddr.sin_addr.s_addr);
+        //printf("%d, %d\n", servaddr.sin_port, servaddr.sin_addr.s_addr);
+        //printf("%lu\n", new_port);
 
         //creo la nuova socket privata per l'invio dei dati
         create_new_socket(&new_sockfd, &cliaddr, new_port, argv);
@@ -96,7 +96,7 @@ int close_connection(int sockfd, struct sockaddr_in servaddr){
         exit(EXIT_FAILURE);
     }
 
-    printf("Sent FIN %d, client_isn: %lu\n", req->FIN, req->initial_n_seq);
+    //printf("Sent FIN %d, client_isn: %lu\n", req->FIN, req->initial_n_seq);
 
     // Aspetta ACK
 
@@ -113,7 +113,7 @@ int close_connection(int sockfd, struct sockaddr_in servaddr){
             goto SEND_FIN;
         }
     }
-    printf("Received ACK %d\n",req->ACK);
+    //printf("Received ACK %d\n",req->ACK);
 
     if (req->ACK == 2){
         // Aspetta FIN del server
@@ -133,7 +133,7 @@ int close_connection(int sockfd, struct sockaddr_in servaddr){
                 perror("Errore in sendto: invio del pacchetto request_t");
                 exit(EXIT_FAILURE);
             }
-            printf("Sent ACK %d\n", req->ACK);
+            //printf("Sent ACK %d\n", req->ACK);
 
             return 1;
 
@@ -163,7 +163,7 @@ static void send_ack(client_info *c_info, char svr_isn, int sockfd)
         perror("sendto() while sending SYN");
         exit(EXIT_FAILURE);
     }
-    printf("SOCK_START sent.\n");
+    //printf("SOCK_START sent.\n");
 
     //ACK (sulla nuova socket)
     free_allocation(req);
@@ -179,5 +179,5 @@ static void send_ack(client_info *c_info, char svr_isn, int sockfd)
         perror("errore in sendto");
         exit(EXIT_FAILURE);
     }
-    printf("Sent ACK with n_seq=%lu\n", req->initial_n_seq);
+    //printf("Sent ACK with n_seq=%lu\n", req->initial_n_seq);
 }
