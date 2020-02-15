@@ -25,7 +25,7 @@ void *get_command_handler(void *arg)
             while (recvfrom(c_info->new_sockfd, (void *) req, sizeof(request_t),
                     MSG_DONTWAIT, (struct sockaddr *) &servaddr, &slen) < 0) {
                 if (errno != EAGAIN && errno != EWOULDBLOCK) {
-                    perror("recvfrom() (ricezione del pacchetto request_t)");
+                    perror("recvfrom() failed");
                     exit(EXIT_FAILURE);
                 }
             }
@@ -38,8 +38,10 @@ void *get_command_handler(void *arg)
 
                 int fd = open_file(path, O_WRONLY | O_CREAT);
                 /* Inizio ricezione file */
+                printf("prima receive_file\n");
                 receive_file(c_info->new_sockfd, (struct sockaddr *) &servaddr,
                     fd);
+                printf("dopo receive_file\n");
                 close_file(fd);
                 free(req);
                 close_file(c_info->new_sockfd);

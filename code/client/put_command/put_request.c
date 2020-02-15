@@ -37,8 +37,10 @@ void *put_command_handler(void *arg)
             else if (req->type == FILEOFF) {
                 /* Inizio invio file */
                 int fd = open_file(path, O_RDONLY);
+                printf("aa\n");
                 send_file(c_info->new_sockfd, (struct sockaddr *) &servaddr,
                     fd);
+                printf("aa\n");
                 close_file(fd);
                 free(req);
                 close_file(c_info->new_sockfd);

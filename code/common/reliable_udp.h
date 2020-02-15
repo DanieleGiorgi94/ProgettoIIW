@@ -12,6 +12,7 @@ typedef unsigned long u64;
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <sched.h>
 #include "udp.h"
 #include "comm.h"
 #include "selective_repeat.h"

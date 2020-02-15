@@ -160,7 +160,16 @@ int main(int argc, char **argv)
         print_banner(inet_ntoa(servaddr.sin_addr), ntohs(servaddr.sin_port));
         main_task(c_info);
     } else {
-        //put_command_handler("put", "divina_commedia.txt", sockfd, servaddr);
+//        char *path = obtain_path(NULL, NULL, 1);
+//        int fd = open_file(strcat(path, "/UPLOAD_FILES/1GB.zip"), O_RDONLY);
+//        int put_fd = open_file(strcat(path, "log_put"), O_WRONLY);
+//        clock_t time;
+//
+//        clock_t starting_time = clock();
+//        send_file(c_info->sockfd, (struct sockaddr *) servaddr, fd);
+//        time = clock() - starting_time;
+//        write_block(put_fd, &time, sizeof(clock_t));
+//        write_block(put_fd, "\n", sizeof(char));
     }
 
     return EXIT_SUCCESS;
