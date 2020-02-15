@@ -72,9 +72,81 @@ int create_connection(client_info *c_info)
         return 0;
     }
 }
-int close_connection(int sockfd, struct sockaddr_in servaddr)
-{
-    return 0;
+int close_connection(int sockfd, struct sockaddr_in servaddr){
+
+    request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
+    u32 slen = sizeof(struct sockaddr);
+
+    srand(time(NULL) + getpid());
+    u64 client_isn = rand() % 100;
+    //Invia FIN
+
+    SEND_FIN:
+
+    req->initial_n_seq = client_isn;
+    req->FIN = 1;
+    req->SYN = 0;
+    req->ACK = 0;
+    req->type = EXIT_REQ;
+
+    if (sendto(sockfd, (void *)req, sizeof(request_t), 0, (struct sockaddr *) &servaddr,
+               sizeof(servaddr)) < 0) {
+        free_allocation(req);
+        perror("Errore in sendto: invio del pacchetto request_t");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Sent FIN %d, client_isn: %lu\n", req->FIN, req->initial_n_seq);
+
+    // Aspetta ACK
+
+    clock_t tspan;
+    tspan = clock();
+
+    while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
+                    (struct sockaddr *) &servaddr, &slen) < 0) {
+        if (errno != EAGAIN && errno != EWOULDBLOCK) {
+            perror("recvfrom() (ricezione del pacchetto request_t)");
+            exit(EXIT_FAILURE);
+        }
+        if (clock() - tspan > 1000){
+            goto SEND_FIN;
+        }
+    }
+    printf("Received ACK %d\n",req->ACK);
+
+    if (req->ACK == 2){
+        // Aspetta FIN del server
+        while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
+                        (struct sockaddr *) &servaddr, &slen) < 0) {
+            if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                perror("recvfrom() (ricezione del pacchetto request_t)");
+                exit(EXIT_FAILURE);
+            }
+        }
+        if (req->FIN){
+            // invia ACK
+            req->initial_n_seq = client_isn+1;
+            if (sendto(sockfd, (void *)req, sizeof(request_t), 0, (struct sockaddr *) &servaddr,
+                       sizeof(servaddr)) < 0) {
+                free_allocation(req);
+                perror("Errore in sendto: invio del pacchetto request_t");
+                exit(EXIT_FAILURE);
+            }
+            printf("Sent ACK %d\n", req->ACK);
+
+            return 1;
+
+        }else{
+            printf("FIN from server not received.\n");
+
+            return 0;
+        }
+    }else{
+        printf("ACK not correctly received.\n");
+
+        return 0;
+    }
 }
 static void send_ack(client_info *c_info, char svr_isn, int sockfd)
 {
