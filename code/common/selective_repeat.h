@@ -4,8 +4,8 @@
 
 #define BUFFER_SIZE 2048
 #define WINDOW_SIZE 1024
-#define TIMEOUT     1000000
-#define LOSS_PROB   50
+#define TIMEOUT     3000000
+#define LOSS_PROB   20
 
 #define PORT   5193
 

@@ -123,7 +123,7 @@ static void *timeout_handler(void *arg) {
                     }
                 } else { //not adaptive
                     if (tspan >= TIMEOUT) { //<--- timer expired pkts
-                        printf("Ri-inviato per timeout %lu\n", pkt.header.n_seq);
+                        //printf("Ri-inviato per timeout %lu\n", pkt.header.n_seq);
                         pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
                         send_pkt(sockfd, &pkt, servaddr);
                         cb->cb_node[i % BUFFER_SIZE].timer = clock();
@@ -225,7 +225,7 @@ static void *receive_ack(void *arg) {
             // Timeout non viene mai calcolato per segmenti ritrasmessi
             //printf("%d\b", cb->cb_node[i % BUFFER_SIZE].pkt.header.retransmitted);
             if (cb->cb_node[i % BUFFER_SIZE].pkt.header.retransmitted == 0) {
-                printf("%li, %li\n", estimatedRTT, (clock()-cb->cb_node[index].timer));
+                //printf("%li, %li\n", estimatedRTT, (clock()-cb->cb_node[index].timer));
                 *timeout = estimateTimeout(&estimatedRTT, &devRTT,
                                            (clock()-cb->cb_node[index].timer));
             }
@@ -239,6 +239,7 @@ static void *receive_ack(void *arg) {
                 unlock_buffer(cb);
                 //printf("receive ack terminato\n");
                 fflush(stdout);
+                free_allocation(ack);
                 return NULL;
             }
             if (cb->S == cb->E) break;
@@ -349,7 +350,7 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd) {
         dynamic_allocation(sizeof(*timeout));
     *timeout = 1000;
 
-    int ret;
+   /* int ret;
     pthread_attr_t sf_tattr, snd_tattr, rca_tattr, tmh_tattr;
     struct sched_param param;
 
@@ -373,7 +374,7 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd) {
     param.sched_priority = 1;
     ret = pthread_attr_setschedparam(&tmh_tattr, &param);
 
-    ret = ret;
+    ret = ret;*/
 
     *timeout = 1000;
 
@@ -407,10 +408,10 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd) {
     tmh_thread.servaddr = servaddr;
     tmh_thread.timeout = timeout;
 
-    if ((pthread_create(&sf_thread.tid, &sf_tattr, split_file, &sf_thread) ||
-         pthread_create(&snd_thread.tid, &snd_tattr, sender, &snd_thread) ||
-         pthread_create(&rca_thread.tid, &rca_tattr, receive_ack, &rca_thread) ||
-         pthread_create(&tmh_thread.tid, &tmh_tattr, timeout_handler, &tmh_thread))
+    if ((pthread_create(&sf_thread.tid, NULL, split_file, &sf_thread) ||
+         pthread_create(&snd_thread.tid, NULL, sender, &snd_thread) ||
+         pthread_create(&rca_thread.tid, NULL, receive_ack, &rca_thread) ||
+         pthread_create(&tmh_thread.tid, NULL, timeout_handler, &tmh_thread))
         != 0) {
         perror("pthread_create() failed");
         exit(EXIT_FAILURE);
@@ -574,8 +575,7 @@ void receive_file(int sockfd, struct sockaddr *servaddr, int fd) {
         exit(EXIT_FAILURE);
     }
 
-    if ((pthread_join(mf_thread.tid, NULL) ||
-         pthread_join(rcv_thread.tid, NULL)) != 0) {
+    if (pthread_join(mf_thread.tid, NULL) != 0) {
         destroy_mutex(&(cb->mtx));
         free_allocation(cb);
         perror("Errore in pthread_join()");

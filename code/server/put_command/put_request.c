@@ -28,5 +28,6 @@ void put_command_handler(int sockfd, struct sockaddr_in servaddr,
         /* Inizio ricezione file */
         receive_file(sockfd, (struct sockaddr *) &servaddr, fd);
         close_file(fd);
+        free_allocation(req);
     }
 }
