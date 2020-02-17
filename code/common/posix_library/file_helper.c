@@ -14,7 +14,7 @@ unsigned long write_block(int fd, char *buf, unsigned long size)
     }
     return r;
 }
-unsigned long read_block(int fd, void *buf, unsigned long size)
+unsigned long read_block(int fd, char *buf, unsigned long size)
 {
     ssize_t v = 0;
     unsigned long r = 0;

@@ -38,7 +38,7 @@ int execute_command(char **, int);
 */
 unsigned long write_block(int, char *, unsigned long);
 /* Simile al precedente; restituisce il numero di byte letti */
-unsigned long read_block(int, void *, unsigned long);
+unsigned long read_block(int, char *, unsigned long);
 /*
     Primo argomento: pathname
     Secondo argomento: flags

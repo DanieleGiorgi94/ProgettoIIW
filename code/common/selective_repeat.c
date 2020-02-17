@@ -71,6 +71,7 @@ static char sym_lost_pkt(void) {
 }
 static void send_pkt(int sockfd, pkt_t *pkt, const struct sockaddr *servaddr) {
     if (!sym_lost_pkt()) {
+
         if (sendto(sockfd, pkt, sizeof(pkt_t), 0, (struct sockaddr *) servaddr,
                    sizeof(struct sockaddr)) < 0) {
             perror("Errore in sendto()");
@@ -133,13 +134,12 @@ static void *timeout_handler(void *arg) {
         }
         unlock_buffer(cb);
     }
-    return NULL;
 }
 static pkt_t create_pkt(int fd, u64 nseq) {
     char buff[MAX_PAYLOAD_SIZE];
     pkt_t pkt;
 
-    u64 read_byte = read_block(fd, buff, MAX_PAYLOAD_SIZE);
+    int read_byte = read_block(fd, buff, MAX_PAYLOAD_SIZE);
 
     if (read_byte == 0) {
         header_t header;
@@ -157,7 +157,10 @@ static pkt_t create_pkt(int fd, u64 nseq) {
         header.type = NORM_PKT;
 
         pkt.header = header;
-        strncpy(pkt.payload, buff, read_byte);
+        //strncpy(pkt.payload, buff, read_byte);
+        for (int i = 0; i < MAX_PAYLOAD_SIZE; i++){
+            pkt.payload[i] = buff[i];
+        }
     }
 
     return pkt;

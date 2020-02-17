@@ -47,21 +47,7 @@ void *create_connection(void *arg)
         //printf("%d\n", req->type);
         goto SYNACK;
     }
-    //printf("SOCK_START received.\n");
 
-    /* Qua ho fatto in modo che ascolto solo se è stata effettivamente
-     * creata la socket nel client. Dovremmo fare una recvfrom
-     * preventiva sulla socket vecchia aspettando un qualche type
-     * speciale che indichi che è stata creata.
-     * OVviamente forse è da migliorare
-     */
-
-   /* printf("%d, %d\n", srv_info->cliaddr.sin_port,
-        srv_info->cliaddr.sin_addr.s_addr);
-    printf("%d, %d\n", srv_info->servaddr.sin_port,
-        srv_info->servaddr.sin_addr.s_addr);
-    printf("%lu\n", srv_info->port_number);
-*/
     //ACK (attesa sulla nuova socket)
     while (recvfrom(new_sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
             (struct sockaddr *) &srv_info->cliaddr, &slen) < 0) {
@@ -95,13 +81,13 @@ void *create_connection(void *arg)
         else if (req->type == PUT_REQ)
             put_command_handler(new_sockfd, srv_info->cliaddr, req->payload,
                 srv_info->path);
+
         release_resources(req, srv_info);
         return NULL;
     } else {
         release_resources(req, srv_info);
         return NULL;
     }
-    return NULL;
 }
 static void release_resources(request_t *req, server_info *srv_info)
 {

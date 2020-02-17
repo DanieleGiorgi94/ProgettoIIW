@@ -18,9 +18,10 @@ void get_command_handler(int sockfd, struct sockaddr_in servaddr,
         char *tmp = obtain_path(NULL, NULL, 1);
         strncat(tmp, filename, strlen(filename));
         int fd = open_file(tmp, O_RDONLY);
-        //printf("prima sendfile\n");
+
         send_file(sockfd, (struct sockaddr *) &servaddr, fd);
-        //printf("fine sendfile\n");
+
+
         free_allocation(req);
         close_file(fd);
     } else { //file non presente

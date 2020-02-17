@@ -31,8 +31,6 @@ void *put_command_handler(void *arg)
             if (req->type == FILEON) {
                 printf("\n");
                 printf("Il file è già presente nel server.\n");
-                //TODO Mettere possibilità di inserire una copia di un
-                // file esistente (Es: prova(1).txt
             }
             else if (req->type == FILEOFF) {
                 /* Inizio invio file */
