@@ -34,8 +34,9 @@ int open_file(char *pathname, int flags)
 {
     int fd;
     while ((fd = open(pathname, flags, 0666)) == -1) {
-        if (errno != EINTR)
-            print_error("open()", &fd);
+//        if (errno != EINTR)
+//            print_error("open()", &fd);
+        return -1;
     }
     return fd;
 }

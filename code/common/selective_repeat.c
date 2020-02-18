@@ -134,6 +134,7 @@ static void *timeout_handler(void *arg) {
         }
         unlock_buffer(cb);
     }
+    return NULL;
 }
 static pkt_t create_pkt(int fd, u64 nseq) {
     char buff[MAX_PAYLOAD_SIZE];

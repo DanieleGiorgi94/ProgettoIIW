@@ -18,8 +18,6 @@ void *create_connection(void *arg)
     char server_isn = rand() % 100;
     u32 slen = sizeof(struct sockaddr);
 
-    SYNACK:
-
     //SYN-ACK (con invio del port number)
     req->initial_n_seq = server_isn;
     req->SYN = 1;

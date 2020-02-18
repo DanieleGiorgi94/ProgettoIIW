@@ -16,6 +16,14 @@ void *put_command_handler(void *arg)
         char *path = obtain_path(cmd, token, 0);
         request_t *req = (request_t *) dynamic_allocation(sizeof(request_t));
 
+        int fd = open_file(path, O_RDONLY);
+        if (fd == -1) {
+            printf("\nIl file non esiste\n");
+            printf(">> ");
+            fflush(stdout);
+            return NULL;
+        }
+
         if (create_connection(c_info)) {
             /* Threeway handshake completed */
             //printf("Waiting for FILEON from server.\n");
@@ -34,7 +42,6 @@ void *put_command_handler(void *arg)
             }
             else if (req->type == FILEOFF) {
                 /* Inizio invio file */
-                int fd = open_file(path, O_RDONLY);
                 send_file(c_info->new_sockfd, (struct sockaddr *) &servaddr,
                     fd);
                 close_file(fd);
