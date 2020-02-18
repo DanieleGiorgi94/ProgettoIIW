@@ -157,12 +157,12 @@ static void send_ack(client_info *c_info, char svr_isn, int sockfd)
     req->initial_n_seq = c_info->client_isn;
     req->type = SOCK_START;
 
-    if (sendto(sockfd, (void *) req, sizeof(request_t), 0,
-               (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
-        free_allocation(req);
-        perror("sendto() while sending SYN");
-        exit(EXIT_FAILURE);
-    }
+//    if (sendto(sockfd, (void *) req, sizeof(request_t), 0,
+//               (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
+//        free_allocation(req);
+//        perror("sendto() while sending SYN");
+//        exit(EXIT_FAILURE);
+//    }
     //printf("SOCK_START sent.\n");
 
     //ACK (sulla nuova socket)

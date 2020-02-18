@@ -36,17 +36,17 @@ void *create_connection(void *arg)
     //printf("Sent SYN-ACK with n_seq=%lu, %d\n", req->initial_n_seq, req->ACK);
 
     // Waiting for SOCK_START
-    while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
-                    (struct sockaddr *) &servaddr, &slen) < 0) {
-        if (errno != EAGAIN && errno != EWOULDBLOCK) {
-            perror("recvfrom()");
-            exit(EXIT_FAILURE);
-        }
-    }
-    if (req->type != SOCK_START) {
-        //printf("%d\n", req->type);
-        goto SYNACK;
-    }
+//    while (recvfrom(sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,
+//                    (struct sockaddr *) &servaddr, &slen) < 0) {
+//        if (errno != EAGAIN && errno != EWOULDBLOCK) {
+//            perror("recvfrom()");
+//            exit(EXIT_FAILURE);
+//        }
+//    }
+//    if (req->type != SOCK_START) {
+//        //printf("%d\n", req->type);
+//        goto SYNACK;
+//    }
 
     //ACK (attesa sulla nuova socket)
     while (recvfrom(new_sockfd, (void *) req, sizeof(request_t), MSG_DONTWAIT,

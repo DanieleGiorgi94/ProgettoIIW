@@ -5,7 +5,7 @@
 #include <dirent.h>
 
 #define TEST 0
-#define ADAPTIVE 1
+#define ADAPTIVE 0
 
 void send_file(int, struct sockaddr *, int);
 void receive_file(int, struct sockaddr *, int);
