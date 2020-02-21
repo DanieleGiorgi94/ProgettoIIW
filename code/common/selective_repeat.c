@@ -46,7 +46,7 @@ static void create_mutex(pthread_mutex_t *mtx) {
 static void destroy_mutex(pthread_mutex_t *mtx) {
     pthread_mutex_destroy(mtx);
 //    if (pthread_mutex_destroy(mtx) != 0) {
-//        perror("pthread_mutex_destroy() failed");
+//       perror("pthread_mutex_destroy() failed");
 //        exit(EXIT_FAILURE);
 //    }
 }
@@ -71,15 +71,14 @@ static char sym_lost_pkt(void) {
 }
 static void send_pkt(int sockfd, pkt_t *pkt, const struct sockaddr *servaddr) {
     if (!sym_lost_pkt()) {
-
         if (sendto(sockfd, pkt, sizeof(pkt_t), 0, (struct sockaddr *) servaddr,
                    sizeof(struct sockaddr)) < 0) {
             perror("Errore in sendto()");
             exit(EXIT_FAILURE);
         }
-//        printf("pkt %ld inviato\n", pkt->header.n_seq);
-//    } else {
-//        printf("pkt %ld perduto\n", pkt->header.n_seq);
+        //printf("pkt %ld inviato\n", pkt->header.n_seq);
+    } else {
+        //printf("pkt %ld perduto\n", pkt->header.n_seq);
     }
 }
 static void *timeout_handler(void *arg) {
@@ -95,10 +94,15 @@ static void *timeout_handler(void *arg) {
     pkt_t pkt;
 
     while(1) {
-        lock_buffer(cb);
+	lock_buffer(cb);
         while (cb->S == cb->E){
             /* buffer circolare vuoto */
-            unlock_buffer(cb);
+            if (cb->end_transmission == 1){
+		printf("Fine timeout handler\n");
+		unlock_buffer(cb);
+		return NULL;
+	    }   
+	    unlock_buffer(cb);
             usleep(SLEEP_TIME);
             lock_buffer(cb);
         }
@@ -113,7 +117,7 @@ static void *timeout_handler(void *arg) {
         //check all pkts in the window and re-send non-acked pkts whose timer
         //expired
         for (u32 i = cb->S; i < I; i++) {
-            if (cb->cb_node[i % BUFFER_SIZE].acked == 0) { //<--- non-acked pkts
+	    if (cb->cb_node[i % BUFFER_SIZE].acked == 0) { //<--- non-acked pkts
                 tspan = clock() - cb->cb_node[i % BUFFER_SIZE].timer;
                 if (ADAPTIVE) {
                     if (tspan >= *timeout) { //<--- timer expired pkts
@@ -124,7 +128,7 @@ static void *timeout_handler(void *arg) {
                     }
                 } else { //not adaptive
                     if (tspan >= TIMEOUT) { //<--- timer expired pkts
-                        //printf("Ri-inviato per timeout %lu\n", pkt.header.n_seq);
+          //              printf("Ri-inviato per timeout %lu\n", pkt.header.n_seq);
                         pkt = cb->cb_node[i % BUFFER_SIZE].pkt;
                         send_pkt(sockfd, &pkt, servaddr);
                         cb->cb_node[i % BUFFER_SIZE].timer = clock();
@@ -132,6 +136,11 @@ static void *timeout_handler(void *arg) {
                 }
             }
         }
+	if (cb->end_transmission == 1){
+		unlock_buffer(cb);
+		return NULL;
+	}
+
         unlock_buffer(cb);
     }
     return NULL;
@@ -140,7 +149,7 @@ static pkt_t create_pkt(int fd, u64 nseq) {
     char buff[MAX_PAYLOAD_SIZE];
     pkt_t pkt;
 
-    int read_byte = read_block(fd, buff, MAX_PAYLOAD_SIZE);
+    u64 read_byte = read_block(fd, buff, MAX_PAYLOAD_SIZE);
 
     if (read_byte == 0) {
         header_t header;
@@ -158,10 +167,9 @@ static pkt_t create_pkt(int fd, u64 nseq) {
         header.type = NORM_PKT;
 
         pkt.header = header;
-        //strncpy(pkt.payload, buff, read_byte);
-        for (int i = 0; i < MAX_PAYLOAD_SIZE; i++){
-            pkt.payload[i] = buff[i];
-        }
+        for (int i = 0; i<MAX_PAYLOAD_SIZE; i++){
+		pkt.payload[i] = buff[i];
+	}
     }
 
     return pkt;
@@ -200,7 +208,6 @@ static void *receive_ack(void *arg) {
         i = ack->n_seq % BUFFER_SIZE;
         index = i;
 
-
         //if cb->S > cb->E, then:
         //  ---------------------------------
         //  |   |   | E |   |   |   | S |   |
@@ -224,14 +231,14 @@ static void *receive_ack(void *arg) {
 
         //if 'i' falls between 'S' and 'I', ACK refers to a pkt in the window
         if (cb->S <= index && index < I){
-            cb->cb_node[index].acked = 1;
+            cb->cb_node[index % BUFFER_SIZE].acked = 1;	
 
             // Timeout non viene mai calcolato per segmenti ritrasmessi
             //printf("%d\b", cb->cb_node[i % BUFFER_SIZE].pkt.header.retransmitted);
             if (cb->cb_node[i % BUFFER_SIZE].pkt.header.retransmitted == 0) {
                 //printf("%li, %li\n", estimatedRTT, (clock()-cb->cb_node[index].timer));
                 *timeout = estimateTimeout(&estimatedRTT, &devRTT,
-                                           (clock()-cb->cb_node[index].timer));
+                                   (clock()-cb->cb_node[index % BUFFER_SIZE].timer));
             }
             //printf("ack %ld ricevuto\n", ack->n_seq);
         }
@@ -241,8 +248,6 @@ static void *receive_ack(void *arg) {
             if (cb->cb_node[cb->S].pkt.header.type == END_OF_FILE) {
                 cb->end_transmission = 1;
                 unlock_buffer(cb);
-                //printf("receive ack terminato\n");
-                fflush(stdout);
                 free_allocation(ack);
                 return NULL;
             }
@@ -270,11 +275,12 @@ static void *sender(void *arg) {
         while (cb->S == cb->E) {
             /* empty circular buffer (no pkts to send) */
             //printf("sender unlock\n");
-            unlock_buffer(cb);
             if (cb->end_transmission == 1) {
-                //printf("sender terminato\n");
+		unlock_buffer(cb);
+                printf("sender terminato\n");
                 return NULL;
             }
+	    unlock_buffer(cb);
             usleep_for(SLEEP_TIME);
             //printf("sender attempt lock\n");
             lock_buffer(cb);
@@ -294,7 +300,8 @@ static void *sender(void *arg) {
             }
         }
     	if (cb->end_transmission == 1) {
-            return NULL;
+  		unlock_buffer(cb);
+	    	return NULL;
         }
         //printf("sender unlock\n");
         unlock_buffer(cb);
@@ -322,8 +329,6 @@ static void *split_file(void *arg) {
         while (nE == cb->S) {
             /* circular buffer's full */
             unlock_buffer(cb);
-            if (cb->end_transmission == 1)
-                return NULL;
             usleep(SLEEP_TIME);
             lock_buffer(cb);
         }
@@ -422,7 +427,9 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd) {
     }
 
     if ((pthread_join(sf_thread.tid, NULL) ||
-         pthread_join(snd_thread.tid, NULL)) != 0) {
+         pthread_join(snd_thread.tid, NULL) || 
+	 pthread_join(rca_thread.tid, NULL) ||
+         pthread_join(tmh_thread.tid, NULL)) != 0) {
         destroy_mutex(&(cb->mtx));
         free_allocation(cb);
         perror("Errore in pthread_join()");
@@ -431,7 +438,6 @@ void send_file(int sockfd, struct sockaddr *servaddr, int fd) {
 
     destroy_mutex(&(cb->mtx));
     free_allocation(cb);
-    printf("---------------------END SENDFILE-------------------\n");
 }
 
 //  ************ RECEIVER ************
@@ -491,11 +497,18 @@ static void *receiver(void *arg) {
 
         while (recvfrom(sockfd, (void *) pkt, sizeof(pkt_t), MSG_DONTWAIT,
                         (struct sockaddr *) servaddr, &slen) < 0) {
-            if (errno != EAGAIN && errno != EWOULDBLOCK) {
+            lock_buffer(cb);
+            if (cb->end_transmission == 1){
+		unlock_buffer(cb);
+	       	return NULL;
+	    }
+	    unlock_buffer(cb); 
+	    if (errno != EAGAIN && errno != EWOULDBLOCK) {
                 perror("recvfrom() failed");
                 exit(EXIT_FAILURE);
             }
-        }
+	      
+	}
 
         struct buf_node cbn;
         cbn.pkt = *pkt;
@@ -511,10 +524,10 @@ static void *receiver(void *arg) {
             // sending ACK
             unlock_buffer(cb);
             send_ack(sockfd, *servaddr, seqnum, pkt_header.type);
-            lock_buffer(cb);
+	    lock_buffer(cb);
         }
-	    if (cb->end_transmission == 1) return NULL;  
-            unlock_buffer(cb);
+
+	unlock_buffer(cb);
     }
 }
 static void *merge_file(void *arg) {
@@ -541,10 +554,10 @@ static void *merge_file(void *arg) {
 
             if (pkt.header.type == END_OF_FILE) {
                 cb->end_transmission = 1;
-	    	    unlock_buffer(cb);
-		        return NULL;
+	    	unlock_buffer(cb);
+		return NULL;
             }
-            write_block(fd, pkt.payload, pkt.header.length);
+            write_block(fd,(void *) pkt.payload, pkt.header.length);
 
             cb->S = (cb->S + 1) % BUFFER_SIZE;
         }
@@ -579,7 +592,8 @@ void receive_file(int sockfd, struct sockaddr *servaddr, int fd) {
         exit(EXIT_FAILURE);
     }
 
-    if (pthread_join(mf_thread.tid, NULL) != 0) {
+    if ((pthread_join(mf_thread.tid, NULL) ||
+	 pthread_join(rcv_thread.tid, NULL)) != 0) {
         destroy_mutex(&(cb->mtx));
         free_allocation(cb);
         perror("Errore in pthread_join()");

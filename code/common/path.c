@@ -27,7 +27,9 @@ char *obtain_path(char *cmd, char *token, char id) {
             strncat(cwd, download_dir, len_download_dir);
         else if (strncmp(cmd, "put", 4) == 0)
             strncat(cwd, upload_dir, len_upload_dir);
-        strncat(cwd, token, strlen(token));
+
+        if (token != NULL)
+            strncat(cwd, token, strlen(token));
     } else {
         strncat(cwd, download_dir, len_download_dir);
     }
