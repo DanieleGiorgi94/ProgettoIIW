@@ -18,7 +18,11 @@ void *put_command_handler(void *arg)
 
         int fd = open_file(path, O_RDONLY);
         if (fd == -1) {
-            printf("\nIl file non esiste\n");
+
+            char *path = obtain_path(cmd, NULL, 0);
+
+            printf("\n%s non è presente tra i propri file locali.\n", token);
+            printf("\nFile disponibili: \n %s\n", list_dir(path));
             printf(">> ");
             fflush(stdout);
             return NULL;

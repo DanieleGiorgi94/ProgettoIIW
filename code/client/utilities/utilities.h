@@ -17,6 +17,8 @@ typedef struct {
 
 void send_request(char *, char *, client_info *);
 void create_new_socket(int *, struct sockaddr_in *, int, char *);
+char *list_dir(char *);
+
 
 struct service_thread {
     client_info *c_info;
